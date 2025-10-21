@@ -1,114 +1,163 @@
-DROP TABLE IF EXISTS Especialidad;
-CREATE TABLE Especialidad (
-    id_especialidad INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre VARCHAR(100) NOT NULL UNIQUE,
-    descripcion TEXT
+-- =============================================================================
+-- SECCIÓN DE BORRADO DE TABLAS
+-- Se eliminan las tablas en orden inverso a su creación para respetar las
+-- restricciones de clave externa (foreign keys).
+-- =============================================================================
+
+DROP TABLE IF EXISTS Detalles_Recetas;
+DROP TABLE IF EXISTS Medicamentos;
+DROP TABLE IF EXISTS Drogas;
+DROP TABLE IF EXISTS Recetas;
+DROP TABLE IF EXISTS Turnos;
+DROP TABLE IF EXISTS Agendas_Excepcionales;
+DROP TABLE IF EXISTS Agendas_Regulares;
+DROP TABLE IF EXISTS Estados;
+DROP TABLE IF EXISTS Medicos_Especialidades;
+DROP TABLE IF EXISTS Medicos;
+DROP TABLE IF EXISTS Especialidades;
+DROP TABLE IF EXISTS Pacientes;
+DROP TABLE IF EXISTS Consultorios;
+DROP TABLE IF EXISTS Sucursales;
+
+-- =============================================================================
+-- SECCIÓN DE CREACIÓN DE TABLAS
+-- =============================================================================
+
+-- Tabla: Sucursales
+CREATE TABLE Sucursales (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Direccion TEXT,
+    Nombre TEXT NOT NULL
 );
 
-DROP TABLE IF EXISTS Sucursal;
-CREATE TABLE Sucursal(
-    id_sucursal INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre VARCHAR(100) NOT NULL,
-    direccion VARCHAR(255) NOT NULL,
-    telefono VARCHAR(20)
+-- Tabla: Consultorios
+CREATE TABLE Consultorios (
+    Numero INTEGER,
+    Sucursal_Id INTEGER,
+    PRIMARY KEY (Numero, Sucursal_Id),
+    FOREIGN KEY (Sucursal_Id) REFERENCES Sucursales(Id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-DROP TABLE IF EXISTS Estado;
-CREATE TABLE Estado(
-    id_estado INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre VARCHAR(50) NOT NULL UNIQUE,
-    descripcion TEXT
+-- Tabla: Pacientes
+CREATE TABLE Pacientes (
+    nroPaciente INTEGER PRIMARY KEY AUTOINCREMENT,
+    Nombre TEXT NOT NULL,
+    Apellido TEXT NOT NULL,
+    Telefono TEXT,
+    Email TEXT UNIQUE
 );
 
-DROP TABLE IF EXISTS Paciente;
-CREATE TABLE Paciente(
-    id_paciente INTEGER PRIMARY KEY AUTOINCREMENT,
-    dni VARCHAR(20) NOT NULL,
-    nombre VARCHAR(100) NOT NULL,
-    apellido VARCHAR(100) NOT NULL,
-    fecha_nacimiento DATE NOT NULL,
-    telefono VARCHAR(20),
-    email VARCHAR(100) UNIQUE
+-- Tabla: Especialidades
+CREATE TABLE Especialidades (
+    Id_especialidad INTEGER PRIMARY KEY AUTOINCREMENT,
+    descripcion TEXT NOT NULL UNIQUE
 );
 
-DROP TABLE IF EXISTS Medico;
-CREATE TABLE Medico(
-    id_medico INTEGER PRIMARY KEY AUTOINCREMENT,
-    matricula VARCHAR(50) NOT NULL UNIQUE,
-    nombre VARCHAR(100) NOT NULL,
-    apellido VARCHAR(100) NOT NULL,
-    id_especialidad INT NOT NULL,
-    FOREIGN KEY (id_especialidad) REFERENCES Especialidad(id_especialidad)
+-- Tabla: Medicos
+CREATE TABLE Medicos (
+    Matricula TEXT PRIMARY KEY,
+    Nombre TEXT NOT NULL,
+    Apellido TEXT NOT NULL
 );
 
-DROP TABLE IF EXISTS Turno;
-CREATE TABLE Turno(
-    id_turno INTEGER PRIMARY KEY AUTOINCREMENT,
-    fecha DATE NOT NULL,
-    hora TIME NOT NULL,
-    id_paciente INT NOT NULL,
-    id_estado INT NOT NULL,
-    id_sucursal INT NOT NULL,
-    id_medico INT NOT NULL,
-    FOREIGN KEY (id_medico) REFERENCES Medico(id_medico),
-    FOREIGN KEY (id_paciente) REFERENCES Paciente(id_paciente),
-    FOREIGN KEY (id_estado) REFERENCES Estado(id_estado),
-    FOREIGN KEY (id_sucursal) REFERENCES Sucursal(id_sucursal),
-    UNIQUE (id_sucursal, fecha, hora)
+-- Tabla: Medicos_Especialidades
+CREATE TABLE Medicos_Especialidades (
+    Medico_Matricula TEXT,
+    Especialidad_Id INTEGER,
+    PRIMARY KEY (Medico_Matricula, Especialidad_Id),
+    FOREIGN KEY (Medico_Matricula) REFERENCES Medicos(Matricula) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (Especialidad_Id) REFERENCES Especialidades(Id_especialidad) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-DROP TABLE IF EXISTS Agenda;
-CREATE TABLE Agenda(
-    id_agenda INTEGER PRIMARY KEY AUTOINCREMENT,
-    id_medico INT NOT NULL,
-    id_sucursal INT NOT NULL,
-    id_turno INT NOT NULL,
-    fecha_inicio DATE NOT NULL,
-    fecha_fin DATE NOT NULL,
-    hora_inicio TIME NOT NULL,
-    hora_fin TIME NOT NULL,
-    intervalo_minutos INT NOT NULL,
-    FOREIGN KEY (id_turno) REFERENCES Turno(id_turno),
-    FOREIGN KEY (id_medico) REFERENCES Medico(id_medico),
-    FOREIGN KEY (id_sucursal) REFERENCES Sucursal(id_sucursal),
-    UNIQUE (id_medico, id_sucursal, fecha_inicio, fecha_fin)
+-- Tabla: Estados
+CREATE TABLE Estados (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Descripcion TEXT NOT NULL UNIQUE
 );
 
-DROP TABLE IF EXISTS HistorialClinico;
-CREATE TABLE HistorialClinico(
-    id_historial INTEGER PRIMARY KEY AUTOINCREMENT,
-    id_paciente INT NOT NULL,
-    id_turno INT NOT NULL,
-    fecha DATE NOT NULL,
-    diagnostico TEXT NOT NULL,
-    tratamiento TEXT,
-    FOREIGN KEY (id_paciente) REFERENCES Paciente(id_paciente),
-    FOREIGN KEY (id_turno) REFERENCES Turno(id_turno)
+-- Tabla: Agendas_Regulares
+CREATE TABLE Agendas_Regulares (
+    Medico_Matricula TEXT,
+    Especialidad_Id INTEGER,
+    Dia_de_semana INTEGER,
+    Hora_inicio TEXT NOT NULL,
+    Hora_fin TEXT NOT NULL,
+    Duracion INTEGER,
+    Sucursal_Id INTEGER,
+    PRIMARY KEY (Medico_Matricula, Especialidad_Id, Dia_de_semana, Hora_inicio),
+    FOREIGN KEY (Medico_Matricula) REFERENCES Medicos(Matricula) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (Especialidad_Id) REFERENCES Especialidades(Id_especialidad) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (Sucursal_Id) REFERENCES Sucursales(Id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
-DROP TABLE IF EXISTS Medicamento;
-CREATE TABLE Medicamento(
-    id_medicamento INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre VARCHAR(100) NOT NULL UNIQUE,
-    descripcion TEXT
+-- Tabla: Agendas_Excepcionales
+CREATE TABLE Agendas_Excepcionales (
+    Medico_Matricula TEXT,
+    Especialidad_Id INTEGER,
+    Fecha_inicio TEXT,
+    Hora_inicio TEXT,
+    Fecha_Fin TEXT,
+    Hora_Fin TEXT,
+    Es_Disponible INTEGER DEFAULT 1, -- Usamos INTEGER para el booleano (1=True, 0=False)
+    Motivo TEXT,
+    Consultorio_Numero INTEGER,
+    Consultorio_Sucursal_Id INTEGER,
+    PRIMARY KEY (Medico_Matricula, Especialidad_Id, Fecha_inicio, Hora_inicio),
+    FOREIGN KEY (Medico_Matricula) REFERENCES Medicos(Matricula) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (Especialidad_Id) REFERENCES Especialidades(Id_especialidad) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (Consultorio_Numero, Consultorio_Sucursal_Id) REFERENCES Consultorios(Numero, Sucursal_Id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
-DROP TABLE IF EXISTS Receta;
-CREATE TABLE Receta(
-    id_receta INTEGER PRIMARY KEY AUTOINCREMENT,
-    fecha_emision DATE DEFAULT CURRENT_DATE,
-    observaciones TEXT
+-- Tabla: Turnos
+CREATE TABLE Turnos (
+    Fecha TEXT,
+    Hora TEXT,
+    Paciente_nroPaciente INTEGER,
+    Medico_Matricula TEXT NOT NULL,
+    Especialidad_Id INTEGER NOT NULL,
+    Estado_Id INTEGER,
+    Sucursal_Id INTEGER,
+    Duracion INTEGER,
+    Motivo TEXT,
+    Diagnostico TEXT,
+    PRIMARY KEY (Fecha, Hora, Paciente_nroPaciente),
+    FOREIGN KEY (Paciente_nroPaciente) REFERENCES Pacientes(nroPaciente) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (Medico_Matricula) REFERENCES Medicos(Matricula) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (Especialidad_Id) REFERENCES Especialidades(Id_especialidad) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (Estado_Id) REFERENCES Estados(Id) ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY (Sucursal_Id) REFERENCES Sucursales(Id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
-DROP TABLE IF EXISTS DetalleReceta;
-CREATE TABLE DetalleReceta(
-    id_detalle_receta INTEGER PRIMARY KEY AUTOINCREMENT,
-    id_receta INT NOT NULL,
-    id_medicamento INT NOT NULL,
-    dosis VARCHAR(100) NOT NULL,
-    frecuencia VARCHAR(100) NOT NULL,
-    duracion VARCHAR(100) NOT NULL,
-    FOREIGN KEY (id_receta) REFERENCES Receta(id_receta),
-    FOREIGN KEY (id_medicamento) REFERENCES Medicamento(id_medicamento),
-    UNIQUE (id_receta, id_medicamento)
+-- Tabla: Recetas
+CREATE TABLE Recetas (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Turno_Fecha TEXT NOT NULL,
+    Turno_Hora TEXT NOT NULL,
+    Turno_Paciente_nroPaciente INTEGER NOT NULL,
+    UNIQUE (Turno_Fecha, Turno_Hora, Turno_Paciente_nroPaciente),
+    FOREIGN KEY (Turno_Fecha, Turno_Hora, Turno_Paciente_nroPaciente) REFERENCES Turnos(Fecha, Hora, Paciente_nroPaciente) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Tabla: Drogas
+CREATE TABLE Drogas (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Descripcion TEXT NOT NULL UNIQUE
+);
+
+-- Tabla: Medicamentos
+CREATE TABLE Medicamentos (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Droga_Id INTEGER,
+    Nombre TEXT NOT NULL,
+    dosis TEXT,
+    FOREIGN KEY (Droga_Id) REFERENCES Drogas(Id) ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- Tabla: Detalles_Recetas
+CREATE TABLE Detalles_Recetas (
+    Receta_Id INTEGER,
+    Medicamento_Id INTEGER,
+    PRIMARY KEY (Receta_Id, Medicamento_Id),
+    FOREIGN KEY (Receta_Id) REFERENCES Recetas(Id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (Medicamento_Id) REFERENCES Medicamentos(Id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
