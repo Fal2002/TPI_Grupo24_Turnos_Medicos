@@ -1,6 +1,6 @@
-from flask import Blueprint
+from fastapi import APIRouter
 from .clientes import clientes_bp
 
-api = Blueprint("api", __name__)
+api = APIRouter()
 
-api.register_blueprint(clientes_bp, url_prefix="/clientes")
+api.include_router(clientes_bp, prefix="/clientes", tags=["clientes"])
