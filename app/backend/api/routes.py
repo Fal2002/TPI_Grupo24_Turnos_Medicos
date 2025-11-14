@@ -1,6 +1,10 @@
 from fastapi import APIRouter
-from .clientes import clientes_bp
+from app.backend.api.pacientes import router as pacientes_router
+from app.backend.api.medicos import router as medicos_router
+from app.backend.api.especialidades import router as especialidades_router
 
-api = APIRouter()
+router = APIRouter()
 
-api.include_router(clientes_bp, prefix="/clientes", tags=["clientes"])
+router.include_router(pacientes_router, prefix="/pacientes", tags=["Pacientes"])
+router.include_router(medicos_router, prefix="/medicos", tags=["Medicos"])
+router.include_router(especialidades_router, prefix="/especialidades", tags=["Especialidades"])
