@@ -1,5 +1,10 @@
 from sqlalchemy import Column, ForeignKeyConstraint, Integer, Text, String, ForeignKey
+from app.backend.db import db
 from app.backend.db.db import Base
+from app.backend.state.estados_turno import (
+    PendienteState, ConfirmadoState, CanceladoState, AtendidoState,
+    FinalizadoState, AusenteState, AnunciadoState)
+from sqlalchemy.orm import relationship
 
 # ========================
 # Sucursales
@@ -196,7 +201,37 @@ class Turno(Base):
     Duracion = Column(Integer)
     Motivo = Column(Text)
     Diagnostico = Column(Text)
+    # RELACIÓN ORM PARA ACCEDER AL ESTADO COMPLETO
+    estado_rel = relationship("Estado")
 
+    # PROPIEDAD PARA OBTENER EL NOMBRE DEL ESTADO (Texto)
+    @property
+    def estado(self):
+        if self.estado_rel:
+            return self.estado_rel.Descripcion
+        return None
+    
+    # MÉTODO PARA OBTENER LA INSTANCIA DEL ESTADO
+    def get_state(self, db):
+        estado = db.query(Estado).filter(Estado.Id == self.Estado_Id).first()
+        if not estado:
+            raise Exception("Estado inválido")
+
+        mapping = {
+            "Pendiente": PendienteState,
+            "Confirmado": ConfirmadoState,
+            "Cancelado": CanceladoState,
+            "Atendido": AtendidoState,
+            "Finalizado": FinalizadoState,
+            "Ausente": AusenteState,
+            "Anunciado": AnunciadoState
+        }
+
+        cls = mapping.get(estado.Descripcion)
+        if not cls:
+            raise Exception(f"Estado desconocido: {estado.Descripcion}")
+
+        return cls(self, db)
 
 # ========================
 # Recetas
