@@ -1,5 +1,44 @@
-./__pycache__/
-*.pyc
-./venv/
+# --- Carpetas de cache ---
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Entornos virtuales ---
 venv/
+.venv/
+env/
+ ENV/
+.ENV/
+
+# --- Archivos de configuración locales ---
 .env
+*.env
+
+# --- Archivos de logs ---
+*.log
+
+# --- Compilados de C ---
+*.so
+
+# --- Archivos generados ---
+*.sqlite3
+*.db
+
+# --- Distribución / empaquetado ---
+build/
+dist/
+*.egg-info/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- IDEs ---
+.vscode/
+.idea/
+
+# --- PyInstaller ---
+*.spec
+
+# --- Otros ---
+.DS_Store
