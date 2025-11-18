@@ -15,8 +15,8 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: '/', label: 'Inicio', icon: Home },
-  { href: '/dashboard', label: 'Panel', icon: PanelTop },
+  { href: '/portal', label: 'Portal', icon: Home },
+  { href: '/portal/turnos', label: 'Turnos', icon: PanelTop },
   { href: '/settings', label: 'Configuración', icon: Settings },
 ];
 
@@ -75,7 +75,7 @@ const Sidebar = () => {
         className={`fixed top-0 left-0 w-64 bg-gray-900 text-white p-5
                     transform transition-transform duration-300 ease-in-out z-20
                     ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-                    md:translate-x-0 md:relative h-screen flex flex-col`}
+                    md:translate-x-0 md:fixed h-screen flex flex-col`}
       >
         <div>
           <div className="mb-6 text-center"> {/* Reducido el margen inferior del logo */}
@@ -87,7 +87,7 @@ const Sidebar = () => {
           {/* --- INICIO DE LA SECCIÓN AÑADIDA --- */}
           <div className="mb-6"> {/* Margen inferior para separar del menú */}
             <Link
-              href="/turnos/nuevo" // Asegúrate de que esta ruta exista
+              href="/portal/agendar" // Asegúrate de que esta ruta exista
               className="flex items-center justify-center w-full p-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
             >
               <CalendarPlus className="mr-2" size={18} />

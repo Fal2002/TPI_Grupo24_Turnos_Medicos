@@ -12,9 +12,9 @@ export default function PortalLayout({
       <Sidebar />
 
       {/* Contenido de la sección portal */}
-      <main className="flex-1 p-4 md:p-8">
-        {children}
-      </main>
+       <main className="md:ml-64 p-4 md:p-8"> {/* <-- CAMBIO AQUÍ */}
+          {children}
+        </main>
     </div>
   );
 }
