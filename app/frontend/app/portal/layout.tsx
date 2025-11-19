@@ -1,5 +1,4 @@
 import Sidebar from "../components/Sidebar";
-import "../globals.css"; // opcional si necesitás estilos globales
 
 export default function PortalLayout({
   children,

@@ -6,10 +6,16 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, Stethoscope, AlertCircle, X, Plus } from 'lucide-react';
 
-// Definimos la interfaz para las opciones del select
+// Interfaz para el Dropdown
 interface Especialidad {
   id: number;
   nombre: string;
+}
+
+// Interfaz para la respuesta de la API (según tu modelo SQLAlchemy)
+interface EspecialidadAPI {
+  Id_especialidad: number;
+  descripcion: string;
 }
 
 export default function NuevoMedicoPage() {
@@ -23,27 +29,38 @@ export default function NuevoMedicoPage() {
     matricula: '',
     nombre: '',
     apellido: '',
-    especialidades: [] as number[] // Array de IDs de especialidades seleccionadas
+    especialidades: [] as number[]
   });
   
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // --- Cargar especialidades (Mock API) ---
+  // --- Cargar especialidades REALES ---
   useEffect(() => {
-    // Simular fetch
-    setTimeout(() => {
-      const mockData = [
-        { id: 1, nombre: 'Cardiología' },
-        { id: 2, nombre: 'Pediatría' },
-        { id: 3, nombre: 'Dermatología' },
-        { id: 4, nombre: 'Neurología' },
-        { id: 5, nombre: 'Clínica Médica' },
-        { id: 6, nombre: 'Traumatología' },
-      ];
-      setListaEspecialidades(mockData);
-      setLoadingData(false);
-    }, 500);
+    const fetchEspecialidades = async () => {
+      try {
+        // Ajusta la URL si tu endpoint de especialidades es diferente
+        const res = await fetch('http://localhost:8000/api/especialidades/especialidades'); 
+        if (!res.ok) throw new Error('Error cargando especialidades');
+        
+        const data: EspecialidadAPI[] = await res.json();
+        
+        // Mapeamos la respuesta de la DB (Id_especialidad, descripcion) al formato del front (id, nombre)
+        const mappedData = data.map(item => ({
+          id: item.Id_especialidad,
+          nombre: item.descripcion
+        }));
+        
+        setListaEspecialidades(mappedData);
+      } catch (err) {
+        console.error(err);
+        setError('No se pudieron cargar las especialidades.');
+      } finally {
+        setLoadingData(false);
+      }
+    };
+
+    fetchEspecialidades();
   }, []);
 
   // --- Manejadores ---
@@ -53,24 +70,19 @@ export default function NuevoMedicoPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Agregar especialidad al seleccionar del dropdown
   const handleAddEspecialidad = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const idSeleccionado = Number(e.target.value);
     if (!idSeleccionado) return;
 
-    // Evitar duplicados
     if (!formData.especialidades.includes(idSeleccionado)) {
       setFormData(prev => ({
         ...prev,
         especialidades: [...prev.especialidades, idSeleccionado]
       }));
     }
-    
-    // Resetear el select visualmente
     e.target.value = "";
   };
 
-  // Eliminar especialidad de la lista seleccionada
   const handleRemoveEspecialidad = (idToRemove: number) => {
     setFormData(prev => ({
       ...prev,
@@ -83,7 +95,6 @@ export default function NuevoMedicoPage() {
     setSubmitting(true);
     setError(null);
 
-    // Validación
     if (!formData.matricula || !formData.nombre || !formData.apellido) {
       setError('Por favor completa los campos obligatorios.');
       setSubmitting(false);
@@ -97,32 +108,30 @@ export default function NuevoMedicoPage() {
     }
 
     try {
-      // POST al Backend
-      console.log("Enviando datos:", {
-        matricula: Number(formData.matricula),
-        nombre: formData.nombre,
-        apellido: formData.apellido,
-        especialidadesIds: formData.especialidades
-      });
+      // Convertimos matrícula a string para coincidir con el Schema backend
+      const payload = {
+        Matricula: formData.matricula.toString(), 
+        Nombre: formData.nombre,
+        Apellido: formData.apellido,
+        especialidades: formData.especialidades // Lista de IDs [1, 2]
+      };
 
-      const response = await fetch('http://localhost:8000/medicos', {
+      const response = await fetch('http://localhost:8000/api/medicos/medicos/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          matricula: Number(formData.matricula),
-          nombre: formData.nombre,
-          apellido: formData.apellido,
-          especialidades: formData.especialidades, // Enviamos IDs
-        }),
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error('Error al registrar el médico');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Error al registrar el médico');
+      }
 
-      router.push('/medicos');
+      router.push('/admin/medicos');
       
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError('Ocurrió un error al intentar guardar. Inténtalo de nuevo.');
+      setError(err.message || 'Ocurrió un error al intentar guardar.');
     } finally {
       setSubmitting(false);
     }
@@ -233,21 +242,19 @@ export default function NuevoMedicoPage() {
                       <option 
                         key={esp.id} 
                         value={esp.id}
-                        // Opcional: Deshabilitar si ya está seleccionada
                         disabled={formData.especialidades.includes(esp.id)}
                       >
                         {esp.nombre} {formData.especialidades.includes(esp.id) ? '(Seleccionada)' : ''}
                       </option>
                     ))}
                   </select>
-                  {/* Icono de flecha custom */}
                   <div className="absolute right-4 top-3.5 pointer-events-none text-gray-500">
                     <Plus size={20} />
                   </div>
                 </div>
               </div>
 
-              {/* Lista de seleccionados (Pills) */}
+              {/* Lista de seleccionados */}
               <div className="min-h-[60px] p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
                 {formData.especialidades.length === 0 ? (
                   <p className="text-sm text-gray-400 text-center italic">
@@ -260,7 +267,7 @@ export default function NuevoMedicoPage() {
                       return (
                         <div 
                           key={id}
-                          className="flex items-center bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium shadow-sm animate-in fade-in zoom-in duration-200"
+                          className="flex items-center bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium shadow-sm"
                         >
                           {especialidad?.nombre || 'Cargando...'}
                           <button
@@ -279,7 +286,6 @@ export default function NuevoMedicoPage() {
             </div>
           </div>
 
-          {/* Botones */}
           <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-100">
             <Link
               href="/medicos"

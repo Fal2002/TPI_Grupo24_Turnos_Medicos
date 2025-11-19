@@ -12,25 +12,37 @@ interface Especialidad {
   nombre: string;
 }
 
-interface MedicoData {
-  matricula: number;
+// Interfaz de respuesta API (Backend usa Mayúsculas)
+interface MedicoResponse {
+  Matricula: string;
+  Nombre: string;
+  Apellido: string;
+  especialidades: number[];
+}
+
+interface EspecialidadAPI {
+  Id_especialidad: number;
+  descripcion: string;
+}
+
+interface FormDataState {
+  matricula: string;
   nombre: string;
   apellido: string;
-  especialidades: number[]; // IDs de las especialidades
+  especialidades: number[];
 }
 
 export default function EditarMedicoPage() {
   const router = useRouter();
   const params = useParams();
-  // Obtenemos la matrícula de la URL
-  const matriculaParam = params.matricula; 
+  const matriculaParam = params.matricula as string;
 
   // --- Estados ---
   const [listaEspecialidades, setListaEspecialidades] = useState<Especialidad[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   
-  const [formData, setFormData] = useState<MedicoData>({
-    matricula: 0,
+  const [formData, setFormData] = useState<FormDataState>({
+    matricula: '',
     nombre: '',
     apellido: '',
     especialidades: []
@@ -43,37 +55,36 @@ export default function EditarMedicoPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Simulamos tiempo de respuesta de API
-        await new Promise(resolve => setTimeout(resolve, 600));
+        // Ejecutamos ambas peticiones en paralelo
+        const [resEspecialidades, resMedico] = await Promise.all([
+            fetch('http://localhost:8000/api/especialidades/especialidades'),
+            fetch(`http://localhost:8000/api/medicos/medicos/${matriculaParam}`)
+        ]);
 
-        // A) Mock: Lista completa de especialidades disponibles
-        const mockEspecialidades = [
-          { id: 1, nombre: 'Cardiología' },
-          { id: 2, nombre: 'Pediatría' },
-          { id: 3, nombre: 'Dermatología' },
-          { id: 4, nombre: 'Neurología' },
-          { id: 5, nombre: 'Clínica Médica' },
-          { id: 6, nombre: 'Traumatología' },
-        ];
-        setListaEspecialidades(mockEspecialidades);
+        if (!resEspecialidades.ok) throw new Error('Error cargando especialidades');
+        if (!resMedico.ok) throw new Error('Error cargando médico');
 
-        // B) Mock: Datos del médico actual (simulando GET /medicos/{matricula})
-        // En un caso real: const res = await fetch(`http://localhost:8000/medicos/${matriculaParam}`);
-        
-        // Simulamos que recibimos estos datos para la matrícula "12345" (o cualquiera que pongas en la URL)
-        const mockMedicoActual = {
-          matricula: Number(matriculaParam), 
-          nombre: 'Juan Carlos',
-          apellido: 'Pérez García',
-          especialidades: [1, 5] // IDs de Cardiología y Clínica Médica
-        };
+        const dataEsp: EspecialidadAPI[] = await resEspecialidades.json();
+        const dataMed: MedicoResponse = await resMedico.json();
 
-        setFormData(mockMedicoActual);
-        setLoadingData(false);
+        // 1. Mapear especialidades para el dropdown
+        setListaEspecialidades(dataEsp.map(e => ({
+            id: e.Id_especialidad,
+            nombre: e.descripcion
+        })));
+
+        // 2. Mapear datos del médico al estado del formulario
+        setFormData({
+            matricula: dataMed.Matricula,
+            nombre: dataMed.Nombre,
+            apellido: dataMed.Apellido,
+            especialidades: dataMed.especialidades || []
+        });
 
       } catch (err) {
         console.error(err);
-        setError('No se pudo cargar la información del médico.');
+        setError('No se pudo cargar la información. Verifique que el servidor esté activo.');
+      } finally {
         setLoadingData(false);
       }
     };
@@ -131,24 +142,25 @@ export default function EditarMedicoPage() {
     }
 
     try {
-      // Petición PUT al backend
-      console.log("Actualizando datos:", formData);
+      // Preparamos el payload (Respetando el Schema MedicoUpdate)
+      // Nota: El backend espera 'Nombre' y 'Apellido' con mayúscula según tu Pydantic anterior,
+      // o minúscula si actualizaste el MedicoUpdate a campos lowercase.
+      // Asumiendo que tu schema MedicoUpdate usa: Nombre, Apellido (Mayúsculas)
+      const payload = {
+        Nombre: formData.nombre,
+        Apellido: formData.apellido,
+        especialidades: formData.especialidades
+      };
 
-      // Ajusta la URL a tu endpoint real
-      const response = await fetch(`http://localhost:8000/medicos/${formData.matricula}`, {
+      const response = await fetch(`http://localhost:8000/api/medicos/medicos/${formData.matricula}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre: formData.nombre,
-          apellido: formData.apellido,
-          especialidades: formData.especialidades,
-          // No enviamos matrícula en el body si no se puede cambiar, 
-          // o la enviamos solo para validación según tu backend.
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) throw new Error('Error al actualizar');
 
+      // Redirigir a la lista de médicos
       router.push('/admin/medicos');
       
     } catch (err) {
@@ -174,7 +186,7 @@ export default function EditarMedicoPage() {
       {/* Encabezado */}
       <div className="flex items-center mb-8">
         <Link 
-          href="/admin/medicos" 
+          href="/medicos" 
           className="p-2 mr-4 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors text-gray-600"
         >
           <ArrowLeft size={24} />
@@ -193,7 +205,7 @@ export default function EditarMedicoPage() {
       <div className="bg-white rounded-xl shadow-md border border-gray-100 p-8">
         
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 flex items-center">
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 flex items-center rounded-r">
             <AlertCircle className="mr-2" size={20} />
             {error}
           </div>
@@ -215,11 +227,11 @@ export default function EditarMedicoPage() {
                 </label>
                 <div className="relative">
                   <input
-                    type="number"
+                    type="text"
                     id="matricula"
                     name="matricula"
                     value={formData.matricula}
-                    disabled // <--- DESHABILITADO
+                    disabled
                     className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed outline-none"
                   />
                   <Stethoscope className="absolute right-4 top-3.5 text-gray-400" size={20} />
@@ -237,7 +249,7 @@ export default function EditarMedicoPage() {
                   name="nombre"
                   value={formData.nombre}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none text-gray-700"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 transition-all"
                 />
               </div>
 
@@ -252,7 +264,7 @@ export default function EditarMedicoPage() {
                   name="apellido"
                   value={formData.apellido}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none text-gray-700"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 transition-all"
                 />
               </div>
             </div>
@@ -302,13 +314,13 @@ export default function EditarMedicoPage() {
                   <div className="flex flex-wrap gap-2">
                     {formData.especialidades.map(id => {
                       const especialidad = listaEspecialidades.find(e => e.id === id);
-                      // Si no cargó aún la lista o el ID no existe, mostramos "Cargando..." o el ID
+                      // Si estamos cargando y aún no mapeó, o si el ID es viejo/inválido
                       const nombreEsp = especialidad ? especialidad.nombre : `ID: ${id}`;
                       
                       return (
                         <div 
                           key={id}
-                          className="flex items-center bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium shadow-sm"
+                          className="flex items-center bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium shadow-sm animate-in fade-in zoom-in duration-200"
                         >
                           {nombreEsp}
                           <button

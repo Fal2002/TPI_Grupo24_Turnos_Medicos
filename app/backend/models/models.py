@@ -2,9 +2,16 @@ from sqlalchemy import Column, ForeignKeyConstraint, Integer, Text, String, Fore
 from app.backend.db import db
 from app.backend.db.db import Base
 from app.backend.state.estados_turno import (
-    PendienteState, ConfirmadoState, CanceladoState, AtendidoState,
-    FinalizadoState, AusenteState, AnunciadoState)
+    PendienteState,
+    ConfirmadoState,
+    CanceladoState,
+    AtendidoState,
+    FinalizadoState,
+    AusenteState,
+    AnunciadoState,
+)
 from sqlalchemy.orm import relationship
+
 
 # ========================
 # Sucursales
@@ -24,7 +31,11 @@ class Consultorio(Base):
     __tablename__ = "Consultorios"
 
     Numero = Column(Integer, primary_key=True)
-    Sucursal_Id = Column(Integer, ForeignKey("Sucursales.Id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
+    Sucursal_Id = Column(
+        Integer,
+        ForeignKey("Sucursales.Id", ondelete="CASCADE", onupdate="CASCADE"),
+        primary_key=True,
+    )
 
 
 # ========================
@@ -53,12 +64,29 @@ class Especialidad(Base):
 # ========================
 # Medicos
 # ========================
+from sqlalchemy.orm import relationship
+
+
 class Medico(Base):
     __tablename__ = "Medicos"
 
     Matricula = Column(String, primary_key=True)
     Nombre = Column(Text, nullable=False)
     Apellido = Column(Text, nullable=False)
+
+    # --- NUEVO CÓDIGO: Relación con Especialidades ---
+    especialidades_rel = relationship(
+        "Especialidad",
+        secondary="Medicos_Especialidades",
+        backref="medicos",
+        lazy="joined",  # Esto ayuda a traer los datos automáticamente en la consulta
+    )
+
+    # Esta propiedad convierte los objetos Especialidad a una lista de integers (Ids)
+    # Pydantic usará este nombre ('especialidades') para llenar el campo del Schema
+    @property
+    def especialidades(self):
+        return [esp.Id_especialidad for esp in self.especialidades_rel]
 
 
 # ========================
@@ -70,13 +98,15 @@ class MedicoEspecialidad(Base):
     Medico_Matricula = Column(
         String,
         ForeignKey("Medicos.Matricula", ondelete="CASCADE", onupdate="CASCADE"),
-        primary_key=True
+        primary_key=True,
     )
 
     Especialidad_Id = Column(
         Integer,
-        ForeignKey("Especialidades.Id_especialidad", ondelete="CASCADE", onupdate="CASCADE"),
-        primary_key=True
+        ForeignKey(
+            "Especialidades.Id_especialidad", ondelete="CASCADE", onupdate="CASCADE"
+        ),
+        primary_key=True,
     )
 
 
@@ -99,13 +129,15 @@ class AgendaRegular(Base):
     Medico_Matricula = Column(
         String,
         ForeignKey("Medicos.Matricula", ondelete="CASCADE", onupdate="CASCADE"),
-        primary_key=True
+        primary_key=True,
     )
 
     Especialidad_Id = Column(
         Integer,
-        ForeignKey("Especialidades.Id_especialidad", ondelete="CASCADE", onupdate="CASCADE"),
-        primary_key=True
+        ForeignKey(
+            "Especialidades.Id_especialidad", ondelete="CASCADE", onupdate="CASCADE"
+        ),
+        primary_key=True,
     )
 
     Dia_de_semana = Column(Integer, primary_key=True)
@@ -117,7 +149,7 @@ class AgendaRegular(Base):
     Sucursal_Id = Column(
         Integer,
         ForeignKey("Sucursales.Id", ondelete="SET NULL", onupdate="CASCADE"),
-        nullable=True
+        nullable=True,
     )
 
 
@@ -130,13 +162,15 @@ class AgendaExcepcional(Base):
     Medico_Matricula = Column(
         String,
         ForeignKey("Medicos.Matricula", ondelete="CASCADE", onupdate="CASCADE"),
-        primary_key=True
+        primary_key=True,
     )
 
     Especialidad_Id = Column(
         Integer,
-        ForeignKey("Especialidades.Id_especialidad", ondelete="CASCADE", onupdate="CASCADE"),
-        primary_key=True
+        ForeignKey(
+            "Especialidades.Id_especialidad", ondelete="CASCADE", onupdate="CASCADE"
+        ),
+        primary_key=True,
     )
 
     Fecha_inicio = Column(Text, primary_key=True)
@@ -159,6 +193,7 @@ class AgendaExcepcional(Base):
         ),
     )
 
+
 # ========================
 # Turnos
 # ========================
@@ -171,31 +206,33 @@ class Turno(Base):
     Paciente_nroPaciente = Column(
         Integer,
         ForeignKey("Pacientes.nroPaciente", ondelete="CASCADE", onupdate="CASCADE"),
-        primary_key=True
+        primary_key=True,
     )
 
     Medico_Matricula = Column(
         String,
         ForeignKey("Medicos.Matricula", ondelete="RESTRICT", onupdate="CASCADE"),
-        nullable=False
+        nullable=False,
     )
 
     Especialidad_Id = Column(
         Integer,
-        ForeignKey("Especialidades.Id_especialidad", ondelete="RESTRICT", onupdate="CASCADE"),
-        nullable=False
+        ForeignKey(
+            "Especialidades.Id_especialidad", ondelete="RESTRICT", onupdate="CASCADE"
+        ),
+        nullable=False,
     )
 
     Estado_Id = Column(
         Integer,
         ForeignKey("Estados.Id", ondelete="SET NULL", onupdate="CASCADE"),
-        nullable=True
+        nullable=True,
     )
 
     Sucursal_Id = Column(
         Integer,
         ForeignKey("Sucursales.Id", ondelete="SET NULL", onupdate="CASCADE"),
-        nullable=True
+        nullable=True,
     )
 
     Duracion = Column(Integer)
@@ -210,7 +247,7 @@ class Turno(Base):
         if self.estado_rel:
             return self.estado_rel.Descripcion
         return None
-    
+
     # MÉTODO PARA OBTENER LA INSTANCIA DEL ESTADO
     def get_state(self, db):
         estado = db.query(Estado).filter(Estado.Id == self.Estado_Id).first()
@@ -224,7 +261,7 @@ class Turno(Base):
             "Atendido": AtendidoState,
             "Finalizado": FinalizadoState,
             "Ausente": AusenteState,
-            "Anunciado": AnunciadoState
+            "Anunciado": AnunciadoState,
         }
 
         cls = mapping.get(estado.Descripcion)
@@ -232,6 +269,7 @@ class Turno(Base):
             raise Exception(f"Estado desconocido: {estado.Descripcion}")
 
         return cls(self, db)
+
 
 # ========================
 # Recetas
@@ -245,8 +283,10 @@ class Receta(Base):
     Turno_Hora = Column(Text, nullable=False)
     Turno_Paciente_nroPaciente = Column(
         Integer,
-        ForeignKey("Turnos.Paciente_nroPaciente", ondelete="CASCADE", onupdate="CASCADE"),
-        nullable=False
+        ForeignKey(
+            "Turnos.Paciente_nroPaciente", ondelete="CASCADE", onupdate="CASCADE"
+        ),
+        nullable=False,
     )
 
 
@@ -271,7 +311,7 @@ class Medicamento(Base):
     Droga_Id = Column(
         Integer,
         ForeignKey("Drogas.Id", ondelete="SET NULL", onupdate="CASCADE"),
-        nullable=True
+        nullable=True,
     )
 
     Nombre = Column(Text, nullable=False)
@@ -287,11 +327,11 @@ class DetalleReceta(Base):
     Receta_Id = Column(
         Integer,
         ForeignKey("Recetas.Id", ondelete="CASCADE", onupdate="CASCADE"),
-        primary_key=True
+        primary_key=True,
     )
 
     Medicamento_Id = Column(
         Integer,
         ForeignKey("Medicamentos.Id", ondelete="RESTRICT", onupdate="CASCADE"),
-        primary_key=True
+        primary_key=True,
     )

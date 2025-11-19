@@ -50,7 +50,7 @@ export default function HomePage() {
 
           {/* Tarjeta para Administrador */}
           <Link
-            href="/admin/dashboard" // <-- APUNTA DIRECTO AL PORTAL DEL ADMIN
+            href="/admin" // <-- APUNTA DIRECTO AL PORTAL DEL ADMIN
             className="group block rounded-lg border bg-white p-8 shadow-md transition-all duration-300 ease-in-out hover:-translate-y-2 hover:shadow-xl hover:border-blue-500 md:col-span-2"
           >
             {/* ... (contenido sin cambios) ... */}
