@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, Award, AlertCircle } from 'lucide-react';
+import { createEspecialidad } from '@/services/especialidades';
 
 export default function NuevaEspecialidadPage() {
   const router = useRouter();
@@ -23,15 +24,10 @@ export default function NuevaEspecialidadPage() {
     }
 
     try {
-      await fetch('http://localhost:8000/especialidades', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // Envio 'nombre' para mantener consistencia con los otros mocks, 
-        // pero el label UI dice "Descripción" como pediste.
-        body: JSON.stringify({ nombre: descripcion }), 
-      });
+      await createEspecialidad({ descripcion });
       router.push('/admin/especialidades');
     } catch (err) {
+      console.error(err);
       setError('Error al crear la especialidad.');
     } finally {
       setLoading(false);

@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.backend.models.models import Sucursal
@@ -6,10 +7,7 @@ from app.backend.schemas.sucursal import SucursalCreate
 
 # Crear sucursal
 def crear_sucursal(db: Session, data: SucursalCreate):
-    nueva = Sucursal(
-        Nombre=data.Nombre,
-        Direccion=data.Direccion
-    )
+    nueva = Sucursal(Nombre=data.Nombre, Direccion=data.Direccion)
     db.add(nueva)
     db.commit()
     db.refresh(nueva)
@@ -17,8 +15,20 @@ def crear_sucursal(db: Session, data: SucursalCreate):
 
 
 # Listar sucursales
-def listar_sucursales(db: Session):
-    return db.query(Sucursal).all()
+def listar_sucursales(
+    db: Session,
+    id: Optional[int] = None,
+    nombre: Optional[str] = None,
+    direccion: Optional[str] = None,
+):
+    query = db.query(Sucursal)
+    if id:
+        query = query.filter(Sucursal.Id == id)
+    if nombre:
+        query = query.filter(Sucursal.Nombre.ilike(f"%{nombre}%"))
+    if direccion:
+        query = query.filter(Sucursal.Direccion.ilike(f"%{direccion}%"))
+    return query.all()
 
 
 # Obtener sucursal por ID

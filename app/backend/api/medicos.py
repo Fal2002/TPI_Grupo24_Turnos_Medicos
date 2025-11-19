@@ -84,3 +84,18 @@ def eliminar_medico(
     if not ok:
         raise HTTPException(status_code=404, detail="Médico no encontrado")
     return {"msg": "Médico eliminado correctamente"}
+
+
+# obtener especialidades de un medico
+@router.get(
+    "/{matricula}/especialidades",
+    response_model=List[str],
+    # dependencies=[Depends(role_required(["Administrador", "Médico"]))],
+)
+def obtener_especialidades_medico(
+    matricula: str, medico_service: MedicoService = Depends(get_medico_service)
+):
+    especialidades = medico_service.obtener_especialidades_medico(matricula)
+    if especialidades is None:
+        raise HTTPException(status_code=404, detail="Médico no encontrado")
+    return especialidades

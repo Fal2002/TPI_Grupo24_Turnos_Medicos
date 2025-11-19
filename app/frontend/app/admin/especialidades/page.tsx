@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Plus, Pencil, Trash2, Award, Hash } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, Award, Hash, AlertTriangle } from 'lucide-react';
+import { getEspecialidades, deleteEspecialidad } from '@/services/especialidades';
 
 interface Especialidad {
   id: number;
@@ -11,27 +12,61 @@ interface Especialidad {
 
 export default function EspecialidadesPage() {
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const [idFilter, setIdFilter] = useState('');
   const [nombreFilter, setNombreFilter] = useState('');
 
-  useEffect(() => {
-    setTimeout(() => {
-      setEspecialidades([
-        { id: 1, nombre: 'Cardiología' },
-        { id: 2, nombre: 'Pediatría' },
-        { id: 3, nombre: 'Dermatología' },
-        { id: 4, nombre: 'Traumatología' },
-      ]);
-      setLoading(false);
-    }, 500);
-  }, []);
+  // --- Estados del Modal de Eliminación ---
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [especialidadToDelete, setEspecialidadToDelete] = useState<Especialidad | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const filteredData = especialidades.filter((item) => {
-    return item.id.toString().includes(idFilter) && 
-           item.nombre.toLowerCase().includes(nombreFilter.toLowerCase());
-  });
+  const handleSearch = async () => {
+    setLoading(true);
+    try {
+      const filters: any = {};
+      if (idFilter) filters.id = idFilter;
+      if (nombreFilter) filters.nombre = nombreFilter;
+      const data = await getEspecialidades(filters);
+      setEspecialidades(data.map((item: any) => ({ id: item.Id_especialidad, nombre: item.descripcion })));
+    } catch (error) {
+      console.error('Error fetching especialidades:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Lógica de Eliminación ---
+
+  const handleOpenDeleteModal = (especialidad: Especialidad) => {
+    setEspecialidadToDelete(especialidad);
+    setShowDeleteModal(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setShowDeleteModal(false);
+    setEspecialidadToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!especialidadToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteEspecialidad(especialidadToDelete.id);
+      
+      // Actualizamos la tabla localmente
+      setEspecialidades(especialidades.filter(e => e.id !== especialidadToDelete.id));
+      
+      handleCloseDeleteModal();
+    } catch (error) {
+      console.error("Error al eliminar", error);
+      alert("Hubo un error al intentar eliminar la especialidad.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -68,6 +103,16 @@ export default function EspecialidadesPage() {
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none text-gray-700"
           />
         </div>
+        <div className="md:col-span-2">
+            <button 
+                onClick={handleSearch}
+                disabled={loading}
+                className="w-full bg-gray-800 hover:bg-gray-900 text-white py-2.5 rounded-lg flex items-center justify-center gap-2 disabled:opacity-70"
+            >
+                {loading ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> : <Search size={18} />}
+                Buscar
+            </button>
+        </div>
       </div>
 
       {/* Tabla */}
@@ -82,8 +127,10 @@ export default function EspecialidadesPage() {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
-              <tr><td colSpan={3} className="p-8 text-center text-gray-500">Cargando...</td></tr>
-            ) : filteredData.map((esp) => (
+                <tr><td colSpan={4} className="px-6 py-12 text-center text-gray-500">Cargando resultados...</td></tr>
+              ) : especialidades.length === 0 ? (
+                <tr><td colSpan={4} className="px-6 py-12 text-center text-gray-500">No se encontraron especialidades.</td></tr>
+              ) : especialidades.map((esp) => (
               <tr key={esp.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm text-gray-900 font-medium">#{esp.id}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{esp.nombre}</td>
@@ -99,6 +146,7 @@ export default function EspecialidadesPage() {
                         </Link>
                         
                         <button
+                          onClick={() => handleOpenDeleteModal(esp)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Eliminar"
                         >
@@ -111,6 +159,41 @@ export default function EspecialidadesPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Modal de Confirmación de Eliminación */}
+      {showDeleteModal && especialidadToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
+            
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">¿Eliminar especialidad?</h3>
+              <p className="text-gray-500 text-sm mb-6">
+                Esta acción es irreversible. Se eliminará la especialidad <strong>{especialidadToDelete.nombre}</strong>.
+              </p>
+            </div>
+
+            <div className="bg-gray-50 px-6 py-4 flex gap-3 justify-end border-t border-gray-100">
+              <button
+                onClick={handleCloseDeleteModal}
+                className="px-4 py-2 rounded-lg text-gray-700 font-medium hover:bg-gray-200 transition-colors"
+                disabled={isDeleting}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30 flex items-center"
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -14,8 +15,13 @@ def crear_sucursal(payload: SucursalCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[SucursalOut])
-def listar_sucursales(db: Session = Depends(get_db)):
-    return sucursal_service.listar_sucursales(db)
+def listar_sucursales(
+    db: Session = Depends(get_db),
+    id: Optional[int] = None,
+    nombre: Optional[str] = None,
+    direccion: Optional[str] = None,
+):
+    return sucursal_service.listar_sucursales(db, id, nombre, direccion)
 
 
 @router.get("/{id}", response_model=SucursalOut)
@@ -24,7 +30,9 @@ def obtener_sucursal(id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{id}", response_model=SucursalOut)
-def actualizar_sucursal(id: int, payload: SucursalCreate, db: Session = Depends(get_db)):
+def actualizar_sucursal(
+    id: int, payload: SucursalCreate, db: Session = Depends(get_db)
+):
     return sucursal_service.actualizar_sucursal(db, id, payload)
 
 

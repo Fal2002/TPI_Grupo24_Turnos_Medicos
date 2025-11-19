@@ -45,17 +45,17 @@ export default function NuevoPacientePage() {
 
     try {
       // Endpoint ajustado para pacientes
-      const response = await fetch('http://localhost:8000/pacientes', {
+      const response = await fetch('http://localhost:8000/api/pacientes/pacientes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          numero: Number(formData.numero), // Asumimos que el número es numérico
-          nombre: formData.nombre,
-          apellido: formData.apellido,
-          email: formData.email,
-          telefono: formData.telefono,
+          nroPaciente: Number(formData.numero), // Asumimos que el número es numérico
+          Nombre: formData.nombre,
+          Apellido: formData.apellido,
+          Email: formData.email,
+          Telefono: formData.telefono,
         }),
       });
 

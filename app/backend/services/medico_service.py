@@ -60,3 +60,7 @@ class MedicoService:
 
         # El Repository se encarga de la eliminación
         return self.medico_repo.delete(medico)
+
+    def obtener_especialidades_medico(self, matricula: str) -> List[str]:
+        medico = self.obtener_medico(matricula)
+        return [esp.Nombre for esp in medico.especialidades]

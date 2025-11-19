@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, Building2, AlertCircle } from 'lucide-react';
+import { createSucursal } from '@/services/sucursales';
 
 export default function NuevaSucursalPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({ nombre: '', direccion: '' });
+  const [formData, setFormData] = useState({ Nombre: '', Direccion: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,21 +17,17 @@ export default function NuevaSucursalPage() {
     setLoading(true);
     setError(null);
 
-    if (!formData.nombre || !formData.direccion) {
+    if (!formData.Nombre || !formData.Direccion) {
       setError('Todos los campos son obligatorios.');
       setLoading(false);
       return;
     }
 
     try {
-      await fetch('http://localhost:8000/sucursales', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
+      await createSucursal(formData);
       router.push('/admin/sucursales');
     } catch (err) {
-      setError('Error al guardar la sucursal.');
+      setError('Error al guardar la sucursal: ' + (err instanceof Error ? err.message : 'Desconocido'));
     } finally {
       setLoading(false);
     }
@@ -61,8 +58,8 @@ export default function NuevaSucursalPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de la Sucursal</label>
             <input
               type="text"
-              value={formData.nombre}
-              onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+              value={formData.Nombre}
+              onChange={(e) => setFormData({ ...formData, Nombre: e.target.value })}
               placeholder="Ej: Sede Central"
               className="text-gray-700 w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
             />
@@ -71,8 +68,8 @@ export default function NuevaSucursalPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
             <input
               type="text"
-              value={formData.direccion}
-              onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+              value={formData.Direccion}
+              onChange={(e) => setFormData({ ...formData, Direccion: e.target.value })}
               placeholder="Ej: Av. Siempre Viva 742"
               className="text-gray-700 w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
             />

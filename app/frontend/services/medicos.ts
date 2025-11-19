@@ -63,3 +63,9 @@ export async function deleteMedico(matricula: number) {
   if (!res.ok) throw new Error("Error al eliminar médico");
   return res.json();
 }
+
+export async function getEspecialidadesMedico(matricula: number | string) {
+  const res = await fetch(`${API_URL}/medicos/${matricula}/especialidades`);
+  if (!res.ok) throw new Error("Error al obtener especialidades del médico");
+  return res.json();
+}
