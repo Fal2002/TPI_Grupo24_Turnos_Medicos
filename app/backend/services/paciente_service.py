@@ -1,57 +1,43 @@
-from sqlalchemy.orm import Session
+from app.backend.schemas.paciente import PacienteCreate, PacienteUpdate # Asumimos estos schemas
 from app.backend.models.models import Paciente
-from app.backend.schemas.paciente import PacienteCreate, PacienteUpdate
+from app.backend.services.paciente_repository import PacienteRepository 
+from app.backend.services.exceptions import RecursoNoEncontradoError, EmailYaRegistradoError
+from typing import List
 
-def crear_paciente(db: Session, data: PacienteCreate):
-    # Verificar si ya existe mail
-    existe = db.query(Paciente).filter(Paciente.Email == data.Email).first()
-    if existe:
-        return None
+class PacienteService:
+    """Contiene la lógica de negocio para la gestión de Pacientes."""
+    
+    def __init__(self, paciente_repo: PacienteRepository):
+        # 💡 Inyección de Dependencia
+        self.paciente_repo = paciente_repo
+        
+    def crear_paciente(self, data: PacienteCreate) -> Paciente:
+        
+        # Lógica de Negocio: Verificar Unicidad del Email
+        if data.Email and self.paciente_repo.get_by_email(data.Email):
+            # Lanza la excepción si el email ya existe
+            raise EmailYaRegistradoError(f"El email '{data.Email}' ya está en uso por otro paciente.")
 
-    paciente = Paciente(
-        Nombre=data.Nombre,
-        Apellido=data.Apellido,
-        Telefono=data.Telefono,
-        Email=data.Email
-    )
-    db.add(paciente)
-    db.commit()
-    db.refresh(paciente)
-    return paciente
+        # Modelado del Paciente
+        nuevo_paciente = Paciente(
+            Nombre=data.Nombre,
+            Apellido=data.Apellido,
+            Telefono=data.Telefono,
+            Email=data.Email
+            # Los campos del DER deben coincidir con los atributos del Model
+        )
+        
+        # Persistencia (Llama al Repository)
+        return self.paciente_repo.create(nuevo_paciente)
 
+    def obtener_pacientes(self) -> List[Paciente]:
+        return self.paciente_repo.get_all()
 
-def obtener_pacientes(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Paciente).offset(skip).limit(limit).all()
+    def obtener_paciente(self, nro_paciente: int) -> Paciente:
+        paciente = self.paciente_repo.get_by_id(nro_paciente)
+        if not paciente:
+            # Lanza la excepción si no lo encuentra
+            raise RecursoNoEncontradoError(f"Paciente con nro {nro_paciente} no encontrado.")
+        return paciente
 
-
-def obtener_paciente(db: Session, nro: int):
-    return db.query(Paciente).filter(Paciente.nroPaciente == nro).first()
-
-
-def actualizar_paciente(db: Session, nro: int, data: PacienteUpdate):
-    paciente = obtener_paciente(db, nro)
-    if not paciente:
-        return None
-
-    if data.Nombre is not None:
-        paciente.Nombre = data.Nombre
-    if data.Apellido is not None:
-        paciente.Apellido = data.Apellido
-    if data.Telefono is not None:
-        paciente.Telefono = data.Telefono
-    if data.Email is not None:
-        paciente.Email = data.Email
-
-    db.commit()
-    db.refresh(paciente)
-    return paciente
-
-
-def eliminar_paciente(db: Session, nro: int):
-    paciente = obtener_paciente(db, nro)
-    if not paciente:
-        return False
-
-    db.delete(paciente)
-    db.commit()
-    return True
+    # ... (Aquí irían las funciones de actualizar y eliminar)

@@ -50,6 +50,14 @@ class Paciente(Base):
     Telefono = Column(Text)
     Email = Column(Text, unique=True)
 
+    User_Id = Column(
+        Integer,
+        ForeignKey("Users.Id", ondelete="SET NULL", onupdate="CASCADE"),
+        nullable=True,
+        unique=True,
+    )
+    user = relationship("User", back_populates="paciente")  # Relación de uno a uno
+
 
 # ========================
 # Especialidades
@@ -74,19 +82,13 @@ class Medico(Base):
     Nombre = Column(Text, nullable=False)
     Apellido = Column(Text, nullable=False)
 
-    # --- NUEVO CÓDIGO: Relación con Especialidades ---
-    especialidades_rel = relationship(
-        "Especialidad",
-        secondary="Medicos_Especialidades",
-        backref="medicos",
-        lazy="joined",  # Esto ayuda a traer los datos automáticamente en la consulta
+    User_Id = Column(
+        Integer,
+        ForeignKey("Users.Id", ondelete="SET NULL", onupdate="CASCADE"),
+        nullable=True,
+        unique=True,
     )
-
-    # Esta propiedad convierte los objetos Especialidad a una lista de integers (Ids)
-    # Pydantic usará este nombre ('especialidades') para llenar el campo del Schema
-    @property
-    def especialidades(self):
-        return [esp.Id_especialidad for esp in self.especialidades_rel]
+    user = relationship("User", back_populates="medico")  # Relación de uno a uno
 
 
 # ========================
@@ -335,3 +337,44 @@ class DetalleReceta(Base):
         ForeignKey("Medicamentos.Id", ondelete="RESTRICT", onupdate="CASCADE"),
         primary_key=True,
     )
+
+
+# ------------------------
+# ROLES (Base para la Autorización)
+# ------------------------
+class Role(Base):
+    __tablename__ = "Roles"
+
+    Id = Column(Integer, primary_key=True, autoincrement=True)
+    Nombre = Column(String, nullable=False, unique=True)
+
+    # Relación de uno a muchos: un Rol puede tener muchos Usuarios
+    usuarios = relationship("User", back_populates="role")
+
+
+# ------------------------
+# USUARIOS (Base para la Autenticación)
+# ------------------------
+class User(Base):
+    __tablename__ = "Users"
+
+    Id = Column(Integer, primary_key=True, autoincrement=True)
+    Email = Column(String, unique=True, nullable=False)
+    Password_Hash = Column(
+        String, nullable=False
+    )  # Aquí se guarda el hash de la contraseña
+
+    # Clave Foránea al Rol
+    Role_Id = Column(
+        Integer,
+        ForeignKey("Roles.Id", ondelete="RESTRICT", onupdate="CASCADE"),
+        nullable=False,
+    )
+
+    # Relación ORM
+    role = relationship("Role", back_populates="usuarios")
+
+    # Relaciones de uno a uno con Médico y Paciente (Opcional)
+    # Estas se pueden usar para vincular una cuenta de usuario con una entidad específica
+    medico = relationship("Medico", back_populates="user", uselist=False)
+    paciente = relationship("Paciente", back_populates="user", uselist=False)

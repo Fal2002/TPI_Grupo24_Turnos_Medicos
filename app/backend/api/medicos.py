@@ -1,57 +1,78 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.backend.db.db import get_db
+from app.backend.services.medico_service import MedicoService
+from app.backend.services.medico_repository import MedicoRepository
 from app.backend.schemas.medico import MedicoCreate, MedicoOut, MedicoUpdate
-from app.backend.services import medico_service
+from app.backend.services.exceptions import MatriculaDuplicadaError
+from app.backend.core.dependencies import get_current_user, role_required
 
 router = APIRouter(prefix="/medicos", tags=["Medicos"])
 
 
-@router.post("/", response_model=MedicoOut)
-def crear_medico(payload: MedicoCreate, db: Session = Depends(get_db)):
-    return medico_service.crear_medico(db, payload)
+# (Esto se encarga de crear el objeto Service con todas sus dependencias)
+def get_medico_service(db: Session = Depends(get_db)) -> MedicoService:
+    repo = MedicoRepository(db)
+    return MedicoService(repo)
 
 
-@router.get("/", response_model=List[MedicoOut])
-def obtener_medicos(
-    matricula: Optional[str] = Query(None, description="Filtrar por matrícula"),
-    nombre: Optional[str] = Query(None, description="Filtrar por nombre o apellido"),
-    especialidad: Optional[str] = Query(
-        None, description="Filtrar por nombre de especialidad"
-    ),
-    db: Session = Depends(get_db),
+@router.post(
+    "/",
+    response_model=MedicoOut,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(role_required(["Administrador"]))],
+)
+def crear_medico(
+    payload: MedicoCreate, medico_service: MedicoService = Depends(get_medico_service)
 ):
-    """
-    Obtiene la lista de médicos. Si se envían parámetros, filtra los resultados.
-    """
-    # Se asume que medico_service.obtener_medicos ha sido actualizado para aceptar estos argumentos
-    return medico_service.obtener_medicos(
-        db, matricula=matricula, nombre=nombre, especialidad=especialidad
-    )
+    try:
+        return medico_service.crear_medico(payload)
+
+    except MatriculaDuplicadaError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+
+@router.get(
+    "/",
+    response_model=List[MedicoOut],
+    dependencies=[Depends(role_required(["Administrador", "Médico"]))],
+)
+def obtener_medicos(medico_service: MedicoService = Depends(get_medico_service)):
+    return medico_service.obtener_medicos()
 
 
 @router.get("/{matricula}", response_model=MedicoOut)
-def obtener_medico(matricula: str, db: Session = Depends(get_db)):
-    medico = medico_service.obtener_medico(db, matricula)
-    if not medico:
-        raise HTTPException(status_code=404, detail="Médico no encontrado")
-    return medico
-
-
-@router.put("/{matricula}", response_model=MedicoOut)
-def actualizar_medico(
-    matricula: str, payload: MedicoUpdate, db: Session = Depends(get_db)
+def obtener_medico(
+    matricula: str, medico_service: MedicoService = Depends(get_medico_service)
 ):
-    medico = medico_service.actualizar_medico(db, matricula, payload)
+    medico = medico_service.obtener_medico(matricula)
     if not medico:
         raise HTTPException(status_code=404, detail="Médico no encontrado")
     return medico
 
 
-@router.delete("/{matricula}")
-def eliminar_medico(matricula: str, db: Session = Depends(get_db)):
-    ok = medico_service.eliminar_medico(db, matricula)
+@router.put(
+    "/{matricula}",
+    response_model=MedicoOut,
+    dependencies=[Depends(role_required(["Administrador"]))],
+)
+def actualizar_medico(
+    matricula: str,
+    payload: MedicoUpdate,
+    medico_service: MedicoService = Depends(get_medico_service),
+):
+    medico = medico_service.actualizar_medico(matricula, payload)
+    if not medico:
+        raise HTTPException(status_code=404, detail="Médico no encontrado")
+    return medico
+
+
+@router.delete("/{matricula}", dependencies=[Depends(role_required(["Administrador"]))])
+def eliminar_medico(
+    matricula: str, medico_service: MedicoService = Depends(get_medico_service)
+):
+    ok = medico_service.eliminar_medico(matricula)
     if not ok:
         raise HTTPException(status_code=404, detail="Médico no encontrado")
     return {"msg": "Médico eliminado correctamente"}
