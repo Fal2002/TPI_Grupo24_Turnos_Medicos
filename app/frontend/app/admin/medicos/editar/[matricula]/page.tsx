@@ -17,7 +17,7 @@ interface MedicoResponse {
   Matricula: string;
   Nombre: string;
   Apellido: string;
-  especialidades: number[];
+  especialidades: { Id_especialidad: number; descripcion: string }[];
 }
 
 interface EspecialidadAPI {
@@ -78,7 +78,7 @@ export default function EditarMedicoPage() {
             matricula: dataMed.Matricula,
             nombre: dataMed.Nombre,
             apellido: dataMed.Apellido,
-            especialidades: dataMed.especialidades || []
+            especialidades: dataMed.especialidades.map(e => e.Id_especialidad) || []
         });
 
       } catch (err) {
@@ -186,7 +186,7 @@ export default function EditarMedicoPage() {
       {/* Encabezado */}
       <div className="flex items-center mb-8">
         <Link 
-          href="/medicos" 
+          href="/admin/medicos" 
           className="p-2 mr-4 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors text-gray-600"
         >
           <ArrowLeft size={24} />

@@ -70,11 +70,8 @@ class Especialidad(Base):
 
 
 # ========================
-# Medicos
+# Médicos
 # ========================
-from sqlalchemy.orm import relationship
-
-
 class Medico(Base):
     __tablename__ = "Medicos"
 
@@ -88,7 +85,15 @@ class Medico(Base):
         nullable=True,
         unique=True,
     )
-    user = relationship("User", back_populates="medico")  # Relación de uno a uno
+    user = relationship("User", back_populates="medico", uselist=False)
+
+    # 🔥 ESTA RELACIÓN FALTABA
+    especialidades = relationship(
+        "Especialidad",
+        secondary="Medicos_Especialidades",
+        backref="medicos",
+        lazy="joined",
+    )
 
 
 # ========================

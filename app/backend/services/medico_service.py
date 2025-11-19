@@ -31,7 +31,7 @@ class MedicoService:
         )
 
         # Persistencia (Llama al Repository)
-        return self.medico_repo.create(nuevo_medico)
+        return self.medico_repo.create(nuevo_medico, data.especialidades)
 
     def obtener_medicos(self) -> List[Medico]:
         return self.medico_repo.get_all()

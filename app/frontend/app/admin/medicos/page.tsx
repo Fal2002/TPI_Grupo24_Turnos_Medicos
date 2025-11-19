@@ -14,7 +14,7 @@ interface Medico {
   Matricula: string;
   Nombre: string;
   Apellido: string;
-  especialidades: number[];
+  especialidades: { Id_especialidad: number, descripcion: string }[];
 }
 
 interface Especialidad {
@@ -245,8 +245,8 @@ export default function MedicosPage() {
                       <div className="flex flex-wrap gap-2">
                         {medico.especialidades && medico.especialidades.length > 0 ? (
                           medico.especialidades.map((idEsp) => (
-                            <span key={idEsp} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                              {getNombreEspecialidad(idEsp)}
+                            <span key={idEsp.Id_especialidad} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                              {getNombreEspecialidad(idEsp.Id_especialidad)}
                             </span>
                           ))
                         ) : <span className="text-xs text-gray-400">Sin especialidades</span>}

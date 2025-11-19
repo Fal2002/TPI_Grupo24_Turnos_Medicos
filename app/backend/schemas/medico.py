@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List
+from app.backend.schemas.especialidad import EspecialidadOut
 
 
 class MedicoBase(BaseModel):
@@ -21,7 +22,7 @@ class MedicoUpdate(BaseModel):
 
 class MedicoOut(MedicoBase):
     Matricula: str
-    especialidades: List[int]
+    especialidades: List[EspecialidadOut]
 
     class Config:
         from_attributes = True

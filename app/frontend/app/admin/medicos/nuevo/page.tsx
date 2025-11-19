@@ -143,7 +143,7 @@ export default function NuevoMedicoPage() {
       {/* Encabezado */}
       <div className="flex items-center mb-8">
         <Link 
-          href="/medicos" 
+          href="/admin/medicos" 
           className="p-2 mr-4 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors text-gray-600"
         >
           <ArrowLeft size={24} />
@@ -288,7 +288,7 @@ export default function NuevoMedicoPage() {
 
           <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-100">
             <Link
-              href="/medicos"
+              href="/admin/medicos"
               className="px-6 py-2.5 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition-colors"
             >
               Cancelar
