@@ -1,5 +1,3 @@
-# app/backend/db/init_roles_and_admin.py
-
 from app.backend.db.db import SessionLocal
 from app.backend.models.models import Role, User
 from app.backend.core.security import hash_password

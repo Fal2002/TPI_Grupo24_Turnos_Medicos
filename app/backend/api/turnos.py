@@ -30,7 +30,7 @@ def get_turno_service(db: Session = Depends(get_db)) -> TurnoService:
 # ----------------------------------------------------
 @router.post("/", response_model=TurnoOut
     , status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(role_required(["Administrador", "Paciente"]))]
+    dependencies=[role_required(["Administrador", "Paciente"])]
 )
 def registrar_turno(
     payload: TurnoCreate, 
@@ -61,7 +61,7 @@ def obtener_todos_los_turnos(service: TurnoService = Depends(get_turno_service))
 # ----------------------------------------------------
 @router.patch("/{fecha}/{hora}/{nro_paciente}/{accion}", 
     response_model=TurnoOut,
-    dependencies=[Depends(role_required(["Administrador", "Médico"]))]
+    dependencies=[role_required(["Administrador", "Médico"])]
 )
 def gestionar_estado_turno(
     fecha: str,

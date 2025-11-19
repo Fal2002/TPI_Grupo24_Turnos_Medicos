@@ -18,7 +18,7 @@ def get_medico_service(db: Session = Depends(get_db)) -> MedicoService:
 @router.post("/", 
     response_model=MedicoOut, 
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(role_required(["Administrador"]))]
+    dependencies=[role_required(["Administrador"])]
 )
 def crear_medico(payload: MedicoCreate, medico_service: MedicoService = Depends(get_medico_service)):
     try:
@@ -30,7 +30,7 @@ def crear_medico(payload: MedicoCreate, medico_service: MedicoService = Depends(
 
 @router.get("/", 
     response_model=List[MedicoOut],
-    dependencies=[Depends(role_required(["Administrador", "Médico"]))]
+    dependencies=[role_required(["Administrador", "Médico"])]
 )
 def obtener_medicos(medico_service: MedicoService = Depends(get_medico_service)):
     return medico_service.obtener_medicos()
@@ -46,7 +46,7 @@ def obtener_medico(matricula: str, medico_service: MedicoService = Depends(get_m
 
 @router.put("/{matricula}", 
     response_model=MedicoOut,
-    dependencies=[Depends(role_required(["Administrador"]))]
+    dependencies=[role_required(["Administrador"])]
 )
 def actualizar_medico(
     matricula: str,
@@ -60,7 +60,7 @@ def actualizar_medico(
 
 
 @router.delete("/{matricula}", 
-    dependencies=[Depends(role_required(["Administrador"]))]
+    dependencies=[role_required(["Administrador"])]
 )
 def eliminar_medico(matricula: str, medico_service: MedicoService = Depends(get_medico_service)):
     ok = medico_service.eliminar_medico(matricula)
