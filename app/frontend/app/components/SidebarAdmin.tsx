@@ -16,9 +16,9 @@ import {
   LogOut,
   Plus,        // Icono Crear
   LayoutList,  // Icono Gestionar (antes Eye)
-  ChevronDown,
-  FileText 
+  ChevronDown 
 } from 'lucide-react';
+import LogOutButton from './LogOut';
 
 interface NavItem {
   href: string;
@@ -31,17 +31,14 @@ const navItems: NavItem[] = [
   { href: '/admin/medicos', label: 'Médicos', icon: Stethoscope },
   { href: '/admin/especialidades', label: 'Especialidades', icon: Award },
   { href: '/admin/sucursales', label: 'Sucursales', icon: Building2 },
-  { href: '/admin/consultorios', label: 'Consultorios', icon: DoorOpen }
-];
-const navReports: NavItem[] = [
-  { href: '/admin/reportes', label: 'Reportes', icon: FileText }
+  { href: '/admin/consultorios', label: 'Consultorios', icon: DoorOpen },
 ];
 
 const LogoutButton = () => {
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     try {
-      await fetch("http://localhost:8000/users/logout", {
+      await fetch("http://localhost:8000/api/auth/logout", {
         method: "POST",
         credentials: "include",
       });
@@ -165,32 +162,6 @@ const AdminSidebar = () => {
 
                       </ul>
                     </div>
-                  </li>
-                );
-              })}
-            </ul>
-
-            <div className="my-4 border-t border-gray-800"></div>
-
-            <ul className="space-y-2">
-              {navReports.map((item) => {
-                const isActive = pathname.startsWith(item.href);
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={isMobileMenuOpen ? toggleMobileMenu : undefined}
-                      className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 z-10 relative
-                                  ${isActive
-                                    ? 'bg-blue-700 text-white shadow-md' 
-                                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                                  }`}
-                    >
-                      <div className="flex items-center">
-                        <item.icon className={`mr-3 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} size={20} />
-                        <span className="font-medium">{item.label}</span>
-                      </div>
-                    </Link>
                   </li>
                 );
               })}
