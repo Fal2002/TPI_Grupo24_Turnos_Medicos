@@ -65,4 +65,4 @@ def role_required(allowed_roles: List[str]):
 
         return current_user
 
-    return Depends(checker)
+    return checker
