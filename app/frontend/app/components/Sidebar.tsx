@@ -6,7 +6,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 // 1. Importar el nuevo icono
-import { Home, PanelTop, Settings, Menu, X, LogOut, CalendarPlus } from 'lucide-react';
+import { Home, PanelTop, Settings, Menu, X, LogOut, CalendarPlus, Calendar1 } from 'lucide-react';
 
 interface NavItem {
   href: string;
@@ -16,8 +16,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: '/portal', label: 'Portal', icon: Home },
-  { href: '/portal/turnos', label: 'Turnos', icon: PanelTop },
-  { href: '/settings', label: 'Configuración', icon: Settings },
+  { href: '/portal/turnos', label: 'Turnos', icon: Calendar1 },
 ];
 
 const LogoutButton = () => {

@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // 1. Define las rutas de destino para cada rol
 const protectedRoutes = {
-    paciente: ['/turnos', '/portal'], // Rutas de paciente
+    paciente: ['/portal'], // Rutas de paciente
     medico: ['/medico'],                            // Rutas de médico (con /medico es suficiente para cubrir /medico/agenda)
     admin: ['/admin']                               // Rutas de administrador
 };

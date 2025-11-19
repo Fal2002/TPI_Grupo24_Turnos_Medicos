@@ -1,9 +1,15 @@
 // app/medico/agenda/page.tsx
 
-import AgendaManager from '../../components/AgendaManager'; // Ajusta la ruta si es necesario
+'use client'; // Sigue siendo un Componente de Cliente para usar hooks
 
-// Este es un Componente de Servidor, óptimo para el layout.
+import AgendaManager from '../../components/AgendaManager';
+// 1. Importamos nuestro hook personalizado
+import { useSpecialty } from '../../contexts/SpecialtyContext'; // Ajusta la ruta
+
 export default function AgendaPage() {
+  // 2. Leemos el valor del contexto
+  const { activeSpecialty } = useSpecialty();
+
   return (
     <div className="p-4 sm:p-6 md:p-8">
       <header className="mb-8">
@@ -12,9 +18,9 @@ export default function AgendaPage() {
           Define tus horarios de trabajo habituales y programa cualquier excepción.
         </p>
       </header>
-
       <main>
-        <AgendaManager />
+        {/* 3. Pasamos el valor como prop, igual que antes */}
+        <AgendaManager activeSpecialty={activeSpecialty} />
       </main>
     </div>
   );

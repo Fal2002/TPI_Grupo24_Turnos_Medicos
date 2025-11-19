@@ -61,7 +61,7 @@ export default function UpcomingAppointments() {
       {/* Enlace para ver todos los turnos */}
       <div className="mt-6 text-right">
         <Link
-          href="/turnos"
+          href="/portal/turnos"
           className="text-sm font-semibold text-blue-600 hover:underline"
         >
           Ver todos los turnos
