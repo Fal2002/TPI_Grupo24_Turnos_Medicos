@@ -96,6 +96,11 @@ class Medico(Base):
     )
 
 
+    @property
+    def email_usuario(self):
+        """Retorna el email del usuario asociado para la serialización."""
+        # Se asume que la relación 'user' ya fue cargada con joinedload
+        return self.user.Email if self.user else None
 # ========================
 # Medicos_Especialidades
 # ========================

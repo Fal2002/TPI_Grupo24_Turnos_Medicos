@@ -1,66 +1,90 @@
+from __future__ import annotations
 from app.backend.schemas.medico import MedicoCreate, MedicoUpdate
-from app.backend.models.models import Medico
-from app.backend.services.medico_repository import MedicoRepository  # Inyección
+from app.backend.models.models import Medico, User, Role
+from app.backend.services.medico_repository import MedicoRepository
+from app.backend.services.user_repository import UserRepository
+from app.backend.core.security import (
+    hash_password,
+)  # Para hashear la contraseña temporal
 from app.backend.services.exceptions import (
     MatriculaDuplicadaError,
     RecursoNoEncontradoError,
+    EmailDuplicadoError,
 )
 from typing import List
 
 
 class MedicoService:
-    """Contiene la lógica de negocio para la gestión de Médicos."""
+    """Contiene la lógica de negocio para la gestión de Médicos y su vinculación con User."""
 
-    def __init__(self, medico_repo: MedicoRepository):
-        # Inyección de Dependencia
+    # 💡 MODIFICACIÓN: Inyección de UserRepository
+    def __init__(self, medico_repo: MedicoRepository, user_repo: UserRepository):
         self.medico_repo = medico_repo
+        self.user_repo = user_repo
 
     def crear_medico(self, data: MedicoCreate) -> Medico:
 
-        # Lógica de Negocio: Verificar Unicidad (Llama al Repository)
-        existe = self.medico_repo.get_by_matricula(data.Matricula)
-        if existe:
-            # Lanza la excepción si la matrícula ya existe
+        # 1. Verificar Matrícula Duplicada
+        if self.medico_repo.get_by_matricula(data.Matricula):
             raise MatriculaDuplicadaError(
                 f"La matrícula {data.Matricula} ya está registrada."
             )
 
-        # Preparación del Model (Usando el Schema)
-        nuevo_medico = Medico(
-            Matricula=data.Matricula, Nombre=data.Nombre, Apellido=data.Apellido
+        # 2. Verificar Email Duplicado (para el nuevo User)
+        if self.user_repo.get_by_email(data.email_login):
+            raise EmailDuplicadoError(
+                f"El email {data.email_login} ya está registrado como usuario."
+            )
+
+        # --- CREACIÓN DEL USER ---
+        role_medico = self.user_repo.get_role_by_name("Médico")
+        if not role_medico:
+            raise RecursoNoEncontradoError(
+                "El rol 'Médico' no está configurado en la base de datos."
+            )
+
+        role_id = role_medico.Id
+        hashed_password = hash_password(data.password_temporal)
+
+        nuevo_user = User(
+            Email=data.email_login, Password_Hash=hashed_password, Role_Id=role_id
         )
 
-        # Persistencia (Llama al Repository)
-        return self.medico_repo.create(nuevo_medico, data.especialidades)
+        # Persistencia del User (obtiene el ID)
+        nuevo_user = self.user_repo.create(nuevo_user)
+        user_id = nuevo_user.Id
 
-    def obtener_medicos(self, matricula=None, nombre=None, especialidad=None):
-        return self.medico_repo.get_filtered(matricula, nombre, especialidad)
+        # --- CREACIÓN DEL MÉDICO CON VINCULACIÓN (Paso 2) ---
+        nuevo_medico = Medico(
+            Matricula=data.Matricula,
+            Nombre=data.Nombre,
+            Apellido=data.Apellido,
+            User_Id=user_id,  # 💡 VINCULACIÓN CLAVE
+        )
+
+        # Persistencia del Medico (el repo hace el commit final)
+        return self.medico_repo.create(nuevo_medico)
+
+    def obtener_medicos(self) -> List[Medico]:
+        return self.medico_repo.get_all()
 
     def obtener_medico(self, matricula: str) -> Medico:
         medico = self.medico_repo.get_by_matricula(matricula)
         if not medico:
-            # Lanza la excepción si no lo encuentra
+
             raise RecursoNoEncontradoError(
                 f"Médico con matrícula {matricula} no encontrado."
             )
         return medico
 
     def actualizar_medico(self, matricula: str, data: MedicoUpdate) -> Medico:
-        medico = self.obtener_medico(
-            matricula
-        )  # Reutilizamos la función que verifica 404
-
-        # Actualización usando el Repository
+        medico = self.obtener_medico(matricula)
         return self.medico_repo.update(medico, data)
 
     def eliminar_medico(self, matricula: str) -> None:
-        medico = self.obtener_medico(
-            matricula
-        )  # Reutilizamos la función que verifica 404
-
-        # El Repository se encarga de la eliminación
-        return self.medico_repo.delete(medico)
-
-    def obtener_especialidades_medico(self, matricula: str) -> List[str]:
         medico = self.obtener_medico(matricula)
-        return [esp.Nombre for esp in medico.especialidades]
+
+        # Opcional: Eliminar también el registro de User
+        # self.user_repo.delete_by_id(medico.User_Id)
+
+        self.medico_repo.delete(medico)

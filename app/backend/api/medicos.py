@@ -4,8 +4,9 @@ from typing import List, Optional
 from app.backend.db.db import get_db
 from app.backend.services.medico_service import MedicoService
 from app.backend.services.medico_repository import MedicoRepository
+from app.backend.services.user_repository import UserRepository
 from app.backend.schemas.medico import MedicoCreate, MedicoOut, MedicoUpdate
-from app.backend.services.exceptions import MatriculaDuplicadaError
+from app.backend.services.exceptions import MatriculaDuplicadaError, EmailDuplicadoError
 from app.backend.core.dependencies import get_current_user, role_required
 
 router = APIRouter(prefix="/medicos", tags=["Medicos"])

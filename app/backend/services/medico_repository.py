@@ -1,7 +1,5 @@
-# app/backend/services/medico_repository.py
-
 from operator import or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.backend.models.models import (
     Especialidad,
     Medico,
@@ -18,11 +16,16 @@ class MedicoRepository:
 
     def get_by_matricula(self, matricula: str) -> Medico | None:
         """Obtiene un médico por su matrícula."""
-        return self.db.query(Medico).filter(Medico.Matricula == matricula).first()
+        return (
+            self.db.query(Medico)
+            .options(joinedload(Medico.user))
+            .filter(Medico.Matricula == matricula)
+            .first()
+        )
 
     def get_all(self) -> List[Medico]:
         """Obtiene todos los médicos."""
-        return self.db.query(Medico).all()
+        return self.db.query(Medico).options(joinedload(Medico.user)).all()
 
     def get_filtered(self, matricula=None, nombre=None, especialidad=None):
         query = self.db.query(Medico)  # modelo SQLAlchemy
