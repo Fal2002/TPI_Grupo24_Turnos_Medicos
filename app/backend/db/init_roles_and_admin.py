@@ -1,19 +1,17 @@
 from app.backend.db.db import SessionLocal
-from app.backend.models.models import Role, User
+from app.backend.models.models import Role, User, Medico, Paciente
 from app.backend.core.security import hash_password
 
 def init_roles_and_admin():
     """
-    Inicializa los roles básicos del sistema (Administrador, Médico, Paciente) 
-    y crea un usuario Administrador por defecto.
+    Inicializa los roles básicos (Administrador, Médico, Paciente)
+    y crea 3 usuarios de prueba: Admin, Médico y Paciente.
     """
     db = SessionLocal()
     
     # --- 1. Definir los Roles ---
     roles_list = ["Administrador", "Médico", "Paciente"]
-    
-    # Diccionario para guardar el objeto Role creado y obtener su ID
-    created_roles = {} 
+    created_roles = {}
 
     print("-> Inicializando Roles...")
     for role_name in roles_list:
@@ -25,31 +23,76 @@ def init_roles_and_admin():
             db.refresh(role)
         created_roles[role_name] = role
 
-    # --- 2. Crear Usuario Administrador ---
-    
-    ADMIN_EMAIL = "admin@turnos.com"
-    ADMIN_PASSWORD = "admin_password" # ¡CAMBIAR EN PRODUCCIÓN!
-    
-    admin_user = db.query(User).filter(User.Email == ADMIN_EMAIL).first()
-    
-    if not admin_user and "Administrador" in created_roles:
-        print(f"-> Creando usuario administrador: {ADMIN_EMAIL}")
-        
-        # Obtener el ID del rol Administrador
-        admin_role_id = created_roles["Administrador"].Id
-        
-        # Hashear la contraseña usando la función de seguridad
-        hashed_pwd = hash_password(ADMIN_PASSWORD)
-        
-        new_admin = User(
-            Email=ADMIN_EMAIL,
-            Password_Hash=hashed_pwd,
-            Role_Id=admin_role_id
+    # ============================================
+    # 2. Crear usuarios base
+    # ============================================
+
+    USERS = [
+        {
+            "email": "admin@turnos.com",
+            "password": "admin123",
+            "role": "Administrador"
+        },
+        {
+            "email": "medico@turnos.com",
+            "password": "medico123",
+            "role": "Médico"
+        },
+        {
+            "email": "paciente@turnos.com",
+            "password": "paciente123",
+            "role": "Paciente"
+        }
+    ]
+
+    print("-> Creando usuarios de prueba...")
+    for u in USERS:
+        existing = db.query(User).filter(User.Email == u["email"]).first()
+        if existing:
+            print(f"✔ Usuario {u['email']} ya existe.")
+            continue
+
+        role_id = created_roles[u["role"]].Id
+
+        new_user = User(
+            Email=u["email"],
+            Password_Hash=hash_password(u["password"]),
+            Role_Id=role_id
         )
-        db.add(new_admin)
+        db.add(new_user)
         db.commit()
-        print("✔ Usuario Admin creado correctamente.")
-    else:
-        print("✔ Usuario Admin ya existe o el Rol Administrador no fue creado.")
+        db.refresh(new_user)
+
+        print(f"✔ Usuario creado: {u['email']} ({u['role']})")
+
+        # ============================================
+        # 3. SI EL USUARIO ES MÉDICO → Crear registro en tabla Médicos
+        # ============================================
+        if u["role"] == "Médico":
+            medico = Medico(
+                Matricula="MED002",
+                Nombre="Juan",
+                Apellido="Pérez",
+                User_Id=new_user.Id
+            )
+            db.add(medico)
+            db.commit()
+            print("   → Médico creado y vinculado al usuario.")
+
+        # ============================================
+        # 4. SI EL USUARIO ES PACIENTE → Crear registro en tabla Pacientes
+        # ============================================
+        if u["role"] == "Paciente":
+            paciente = Paciente(
+                Nombre="Ana",
+                Apellido="Martínez",
+                Telefono="3515555555",
+                Email=u["email"],
+                User_Id=new_user.Id
+            )
+            db.add(paciente)
+            db.commit()
+            print("   → Paciente creado y vinculado al usuario.")
 
     db.close()
+    print("\n✔ Inicialización completa.\n")

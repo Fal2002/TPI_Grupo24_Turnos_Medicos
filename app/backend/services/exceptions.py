@@ -25,3 +25,7 @@ class ValueError(Exception):
 class IntegrityError(Exception):
     """Excepción para errores de integridad de datos (ej. violación de unicidad)."""
     pass
+
+class EmailDuplicadoError(Exception):
+    """Excepción lanzada cuando se intenta crear un Usuario con un email ya existente."""
+    pass

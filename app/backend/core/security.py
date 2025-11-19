@@ -10,7 +10,7 @@ from jose import jwt, JWTError
 
 # La clave secreta debe ser una cadena aleatoria y compleja.
 # ¡IMPORTANTE!: En producción, esto debe cargarse desde una variable de entorno.
-SECRET_KEY = "tu_super_clave_secreta_y_larga_aqui" 
+SECRET_KEY = "SUPER_CLAVE_FINAL_2025"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # Token válido por 24 horas
 

@@ -1,74 +1,70 @@
-from typing import Annotated, List
-from fastapi import Header, HTTPException, status, Depends
+# app/backend/core/dependencies.py
+
+from __future__ import annotations
+from typing import List
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.backend.db.db import get_db
+from fastapi.security import HTTPAuthorizationCredentials
+
+from app.backend.core.security_schema import bearer_scheme
 from app.backend.core import security
-from app.backend.models.models import User, Role
+from app.backend.db.db import get_db
+from app.backend.models.models import User
 from app.backend.services.user_repository import UserRepository
 
-# ----------------------------------------------------
-# 1. DEPENDENCIA DE AUTENTICACIÓN (Obtener Usuario Actual)
-# ----------------------------------------------------
-
+# ============================================
+# 1. Obtener usuario actual desde el token JWT
+# ============================================
 async def get_current_user(
-    db: Session = Depends(get_db),
-    # Obtener el token del header "Authorization" (Bearer <token>)
-    authorization: Annotated[str | None, Header()] = None 
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: Session = Depends(get_db)
 ) -> User:
-    """Decodifica el token JWT y devuelve el objeto User autenticado."""
-    
-    # 1. Chequeo de Token en Header
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token de autenticación faltante o inválido.",
-        )
-    
-    token = authorization.split(" ")[1] # Extrae solo el token de "Bearer <token>"
-    
-    # 2. Decodificar el Token
+
+    token = credentials.credentials  # solo el JWT, sin "Bearer"
+
     payload = security.decode_access_token(token)
     
     if payload is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o expirado.",
+            detail="Token inválido o expirado"
         )
-    
-    user_id = payload.get("user_id")
-    
-    # 3. Buscar Usuario en DB
-    user_repo = UserRepository(db)
-    user = user_repo.get_by_id(user_id) # Se asume que UserRepository tiene get_by_id
 
-    if user is None:
+    user_id = payload.get("user_id")
+
+    repo = UserRepository(db)
+    user = repo.get_by_id(user_id)
+
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuario asociado al token no encontrado.",
+            detail="Usuario no encontrado"
         )
-        
+
     return user
 
 
-# ----------------------------------------------------
-# 2. DEPENDENCIA DE AUTORIZACIÓN (Chequeo de Roles - RBAC)
-# ----------------------------------------------------
-
+# ============================================
+# 2. AUTORIZACIÓN POR ROL (RBAC)
+# ============================================
 def role_required(allowed_roles: List[str]):
-    """
-    Función Factory que verifica si el usuario actual tiene uno de los roles permitidos.
-    """
-    def role_checker(current_user: User = Depends(get_current_user)):
-        
-        # Busca el nombre del rol del usuario actual
-        # Se asume que el objeto User tiene cargada la relación 'role'
-        current_role_name = current_user.role.Nombre
-        
-        if current_role_name not in allowed_roles:
+
+    def checker(current_user: User = Depends(get_current_user)):
+
+        if not current_user.role:
+            raise HTTPException(
+                status_code=500,
+                detail="El usuario no tiene un rol asignado"
+            )
+
+        role_name = current_user.role.Nombre
+
+        if role_name not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Acceso denegado. Rol '{current_role_name}' no autorizado para esta acción.",
+                detail=f"Acceso denegado. Se requiere un rol en {allowed_roles}"
             )
+
         return current_user
-        
-    return Depends(role_checker)
+
+    return Depends(checker)

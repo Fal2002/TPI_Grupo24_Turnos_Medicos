@@ -4,16 +4,25 @@ from typing import List
 from app.backend.db.db import get_db
 from app.backend.services.medico_service import MedicoService
 from app.backend.services.medico_repository import MedicoRepository
+from app.backend.services.user_repository import UserRepository 
 from app.backend.schemas.medico import MedicoCreate, MedicoOut, MedicoUpdate
-from app.backend.services.exceptions import MatriculaDuplicadaError
+from app.backend.services.exceptions import MatriculaDuplicadaError, EmailDuplicadoError 
 from app.backend.core.dependencies import get_current_user, role_required
 
 router = APIRouter(prefix="/medicos", tags=["Medicos"])
 
-# (Esto se encarga de crear el objeto Service con todas sus dependencias)
-def get_medico_service(db: Session = Depends(get_db)) -> MedicoService:
+
+def get_user_repository(db: Session = Depends(get_db)) -> UserRepository:
+    return UserRepository(db)
+
+
+def get_medico_service(
+    db: Session = Depends(get_db),
+    user_repo: UserRepository = Depends(get_user_repository)
+) -> MedicoService:
     repo = MedicoRepository(db)
-    return MedicoService(repo)
+    # Pasa ambos repositorios al Service
+    return MedicoService(repo, user_repo) 
 
 @router.post("/", 
     response_model=MedicoOut, 
@@ -26,8 +35,11 @@ def crear_medico(payload: MedicoCreate, medico_service: MedicoService = Depends(
     
     except MatriculaDuplicadaError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
-
-
+    
+    except EmailDuplicadoError as e: 
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+    
+    
 @router.get("/", 
     response_model=List[MedicoOut],
     dependencies=[role_required(["Administrador", "Médico"])]

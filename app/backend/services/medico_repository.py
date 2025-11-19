@@ -1,6 +1,4 @@
-# app/backend/services/medico_repository.py
-
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.backend.models.models import Medico # Asume que tu Medico model está importado
 from typing import List
 from app.backend.schemas.medico import MedicoUpdate # Para tipado en el update
@@ -13,11 +11,11 @@ class MedicoRepository:
 
     def get_by_matricula(self, matricula: str) -> Medico | None:
         """Obtiene un médico por su matrícula."""
-        return self.db.query(Medico).filter(Medico.Matricula == matricula).first()
+        return self.db.query(Medico).options(joinedload(Medico.user)).filter(Medico.Matricula == matricula).first()
 
     def get_all(self) -> List[Medico]:
         """Obtiene todos los médicos."""
-        return self.db.query(Medico).all()
+        return self.db.query(Medico).options(joinedload(Medico.user)).all()
 
     def create(self, medico_data: Medico) -> Medico:
         """Persiste un nuevo objeto Medico en la DB."""

@@ -65,6 +65,11 @@ class Medico(Base):
     User_Id = Column(Integer, ForeignKey("Users.Id", ondelete="SET NULL", onupdate="CASCADE"), nullable=True, unique=True)
     user = relationship("User", back_populates="medico") # Relación de uno a uno
 
+    @property
+    def email_usuario(self):
+        """Retorna el email del usuario asociado para la serialización."""
+        # Se asume que la relación 'user' ya fue cargada con joinedload
+        return self.user.Email if self.user else None
 # ========================
 # Medicos_Especialidades
 # ========================
