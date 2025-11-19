@@ -1,18 +1,21 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import date
 
 # ============================
 # SCHEMA DE ENTRADA (POST)
 # ============================
 class TurnoCreate(BaseModel):
-    fecha: date
-    hora: str
-    paciente_nroPaciente: int
-    medico_matricula: str
-    especialidad_id: int
-    sucursal_id: int | None = None
-    duracion: int | None = None
-    motivo: str | None = None
+    fecha: date = Field(alias="Fecha")
+    hora: str = Field(alias="Hora")  # Formato "HH:MM"
+    paciente_nroPaciente: int = Field(alias="Paciente_nroPaciente")
+    medico_matricula: str = Field(alias="Medico_Matricula")
+    especialidad_id: int = Field(alias="Especialidad_Id")
+    
+    sucursal_id: int | None = Field(default=None, alias="Sucursal_Id")
+    duracion: int | None = Field(default=None, alias="Duracion")
+    motivo: str | None = Field(default=None, alias="Motivo")
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================

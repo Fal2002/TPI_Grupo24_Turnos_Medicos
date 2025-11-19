@@ -1,44 +1,66 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
 from app.backend.db.db import get_db
-from app.backend.schemas.paciente import PacienteCreate, PacienteBase, PacienteUpdate
-from app.backend.services import paciente_service
+from app.backend.schemas.paciente import PacienteCreate, PacienteOut 
+from app.backend.services.paciente_service import PacienteService
+from app.backend.services.paciente_repository import PacienteRepository 
+from app.backend.services.exceptions import RecursoNoEncontradoError, EmailYaRegistradoError
+from typing import List
 
 router = APIRouter(prefix="/pacientes", tags=["Pacientes"])
 
-@router.post("/", response_model=PacienteBase)
-def crear_paciente(payload: PacienteCreate, db: Session = Depends(get_db)):
-    paciente = paciente_service.crear_paciente(db, payload)
-    if paciente is None:
-        raise HTTPException(status_code=400, detail="El email ya está registrado")
-    return paciente
+# 💡 Función de Inyección de Dependencia para PacienteService
+def get_paciente_service(db: Session = Depends(get_db)) -> PacienteService:
+    repo = PacienteRepository(db)
+    return PacienteService(repo)
 
 
-@router.get("/", response_model=List[PacienteBase])
-def obtener_pacientes(db: Session = Depends(get_db)):
-    return paciente_service.obtener_pacientes(db)
+# ----------------------------------------------------
+# Endpoint 1: Crear Paciente (CREATE)
+# ----------------------------------------------------
+@router.post("/", response_model=PacienteOut, status_code=status.HTTP_201_CREATED)
+def crear_paciente_endpoint(
+    payload: PacienteCreate, 
+    service: PacienteService = Depends(get_paciente_service)
+):
+    try:
+        return service.crear_paciente(payload)
+        
+    except EmailYaRegistradoError as e:
+        # Falla de Lógica de Negocio (Email duplicado)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
 
-@router.get("/{nro}", response_model=PacienteBase)
-def obtener_paciente(nro: int, db: Session = Depends(get_db)):
-    paciente = paciente_service.obtener_paciente(db, nro)
-    if not paciente:
-        raise HTTPException(status_code=404, detail="Paciente no encontrado")
-    return paciente
+# ----------------------------------------------------
+# Endpoint 2: Obtener Todos los Pacientes
+# ----------------------------------------------------
+@router.get("/", response_model=List[PacienteOut])
+def obtener_pacientes_endpoint(service: PacienteService = Depends(get_paciente_service)):
+    return service.obtener_pacientes()
 
 
-@router.put("/{nro}", response_model=PacienteBase)
-def actualizar_paciente(nro: int, payload: PacienteUpdate, db: Session = Depends(get_db)):
-    paciente = paciente_service.actualizar_paciente(db, nro, payload)
-    if not paciente:
-        raise HTTPException(status_code=404, detail="Paciente no encontrado")
-    return paciente
+# ----------------------------------------------------
+# Endpoint 3: Obtener Paciente por ID
+# ----------------------------------------------------
+@router.get("/{nro_paciente}", response_model=PacienteOut)
+def obtener_paciente_endpoint(nro_paciente: int, service: PacienteService = Depends(get_paciente_service)):
+    try:
+        return service.obtener_paciente(nro_paciente)
+        
+    except RecursoNoEncontradoError as e:
+        # Falla de recurso no encontrado (404)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    
 
-
-@router.delete("/{nro}")
-def eliminar_paciente(nro: int, db: Session = Depends(get_db)):
-    ok = paciente_service.eliminar_paciente(db, nro)
-    if not ok:
-        raise HTTPException(status_code=404, detail="Paciente no encontrado")
-    return {"msg": "Paciente eliminado correctamente"}
+# Endpoint 4: Elminar turno
+@router.delete("/{nro_paciente}")
+def eliminar_paciente_endpoint(nro_paciente: int, service: PacienteService = Depends(get_paciente_service)):
+    try:
+        ok = service.eliminar_paciente(nro_paciente)
+        if not ok:
+            raise RecursoNoEncontradoError(f"Paciente con nro {nro_paciente} no encontrado.")
+        return {"msg": "Paciente eliminado correctamente"}
+        
+    except RecursoNoEncontradoError as e:
+        # Falla de recurso no encontrado (404)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
