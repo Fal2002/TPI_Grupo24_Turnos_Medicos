@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from app.backend.db.db import get_db
-from app.backend.schemas.paciente import PacienteCreate, PacienteBase, PacienteUpdate
+from app.backend.schemas.paciente import PacienteCreate, PacienteOut, PacienteUpdate
 from app.backend.services import paciente_service
 
 router = APIRouter(prefix="/pacientes", tags=["Pacientes"])
 
-@router.post("/", response_model=PacienteBase)
+@router.post("/", response_model=PacienteOut)
 def crear_paciente(payload: PacienteCreate, db: Session = Depends(get_db)):
     paciente = paciente_service.crear_paciente(db, payload)
     if paciente is None:
@@ -15,12 +15,12 @@ def crear_paciente(payload: PacienteCreate, db: Session = Depends(get_db)):
     return paciente
 
 
-@router.get("/", response_model=List[PacienteBase])
+@router.get("/", response_model=List[PacienteOut])
 def obtener_pacientes(db: Session = Depends(get_db)):
     return paciente_service.obtener_pacientes(db)
 
 
-@router.get("/{nro}", response_model=PacienteBase)
+@router.get("/{nro}", response_model=PacienteOut)
 def obtener_paciente(nro: int, db: Session = Depends(get_db)):
     paciente = paciente_service.obtener_paciente(db, nro)
     if not paciente:
@@ -28,7 +28,7 @@ def obtener_paciente(nro: int, db: Session = Depends(get_db)):
     return paciente
 
 
-@router.put("/{nro}", response_model=PacienteBase)
+@router.put("/{nro}", response_model=PacienteOut)
 def actualizar_paciente(nro: int, payload: PacienteUpdate, db: Session = Depends(get_db)):
     paciente = paciente_service.actualizar_paciente(db, nro, payload)
     if not paciente:

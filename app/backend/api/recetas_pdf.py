@@ -6,7 +6,7 @@ from app.backend.db.db import get_db
 from app.backend.models.models import Receta, Paciente, Medico, Turno
 from app.backend.services.receta_pdf_service import RecetaPDFService
 
-router = APIRouter(prefix="/recetas", tags=["Recetas PDF"])
+router = APIRouter(prefix="/recetas-pdf", tags=["Recetas PDF"])
 
 
 @router.get("/{receta_id}/pdf")

@@ -28,10 +28,16 @@ def obtener_receta(db: Session, id: int):
     return receta
 
 def eliminar_receta(db: Session, id: int):
-    receta = obtener_receta(db, id)
+    receta = db.query(Receta).filter(Receta.Id == id).first()
+    if not receta:
+        raise HTTPException(status_code=404, detail="Receta no encontrada")
+    
+    db.query(DetalleReceta).filter(DetalleReceta.Receta_Id == id).delete()
+    
     db.delete(receta)
     db.commit()
     return {"msg": "Receta eliminada correctamente"}
+
 
 def obtener_receta_completa(db: Session, id: int):
     receta = db.query(Receta).filter(Receta.Id == id).first()

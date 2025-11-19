@@ -15,15 +15,13 @@ def obtener_especialidades(db: Session):
     return db.query(Especialidad).all()
 
 def obtener_especialidad(db: Session, especialidad_id: int):
-    return db.query(Especialidad).filter(Especialidad.id == especialidad_id).first()
+    return db.query(Especialidad).filter(Especialidad.Id_especialidad == especialidad_id).first()
 
 def actualizar_especialidad(db: Session, especialidad_id: int, payload: EspecialidadUpdate):
     esp = obtener_especialidad(db, especialidad_id)
     if not esp:
         return None
     
-    if payload.nombre is not None:
-        esp.nombre = payload.nombre
     if payload.descripcion is not None:
         esp.descripcion = payload.descripcion
 
@@ -34,7 +32,7 @@ def actualizar_especialidad(db: Session, especialidad_id: int, payload: Especial
 def eliminar_especialidad(db: Session, especialidad_id: int):
     esp = obtener_especialidad(db, especialidad_id)
     if not esp:
-        return None
+        return False
 
     db.delete(esp)
     db.commit()
