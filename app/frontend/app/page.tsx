@@ -24,7 +24,7 @@ export default function HomePage() {
 
           {/* Tarjeta para el Médico */}
           <Link
-            href="/medico/agenda" // <-- APUNTA DIRECTO AL PORTAL DEL MÉDICO
+            href="/medico" // <-- APUNTA DIRECTO AL PORTAL DEL MÉDICO
             className="group block rounded-lg border bg-white p-8 shadow-md transition-all duration-300 ease-in-out hover:-translate-y-2 hover:shadow-xl hover:border-blue-500"
           >
             {/* ... (contenido sin cambios) ... */}
