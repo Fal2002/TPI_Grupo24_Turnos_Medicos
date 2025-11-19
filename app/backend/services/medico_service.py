@@ -114,3 +114,13 @@ def actualizar_medico(db: Session, matricula: str, data: MedicoUpdate):
     db.commit()
     db.refresh(medico)
     return medico
+
+
+def eliminar_medico(db: Session, matricula: str):
+    medico = obtener_medico(db, matricula)
+    if not medico:
+        return False
+
+    db.delete(medico)
+    db.commit()
+    return True
