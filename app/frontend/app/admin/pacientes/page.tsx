@@ -10,7 +10,7 @@ import {
 import { getPacientes, deletePaciente } from '@/services/pacientes';
 
 interface Paciente {
-  numero: number; // DNI o Nro Afiliado
+  numero: number;
   nombre: string;
   apellido: string;
   email: string;
@@ -110,7 +110,7 @@ export default function PacientesPage() {
           <Hash className="absolute left-3 top-2.5 text-gray-400" size={16} />
           <input
             type="number"
-            placeholder="Filtrar por Número (DNI)"
+            placeholder="Filtrar por Número"
             value={numeroFilter}
             onChange={(e) => setNumeroFilter(e.target.value)}
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none text-gray-700"
@@ -208,7 +208,7 @@ export default function PacientesPage() {
               {/* Tarjeta de Datos del Paciente */}
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-left mb-2">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs font-semibold text-gray-500 uppercase">Número / DNI</span>
+                  <span className="text-xs font-semibold text-gray-500 uppercase">NúmeroI</span>
                   <span className="text-sm font-mono font-bold text-gray-800">{pacienteToDelete.numero}</span>
                 </div>
                 <div className="flex justify-between items-center">
