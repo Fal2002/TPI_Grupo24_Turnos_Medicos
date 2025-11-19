@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from app.backend.api.routes import router as api_router
 from app.backend.db.db import Base, engine
 from app.backend.db.init_estados import init_estados
-
+from app.backend.db.init_roles import init_roles
 
 # ⭐ Crear tablas si no existen
 Base.metadata.create_all(bind=engine)
@@ -16,6 +16,8 @@ async def lifespan(app: FastAPI):
     # Se ejecuta AL INICIAR FastAPI
     print("▶ Cargando estados en la base de datos...")
     init_estados()
+    init_roles()
+    print("✔ Estados y roles inicializados correctamente.")
 
     yield   # ← punto donde la app ya está levantada
 
