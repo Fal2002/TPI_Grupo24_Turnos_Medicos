@@ -1,5 +1,6 @@
 # app/backend/services/medico_repository.py
 
+from operator import or_
 from sqlalchemy.orm import Session
 from app.backend.models.models import (
     Especialidad,
@@ -22,6 +23,27 @@ class MedicoRepository:
     def get_all(self) -> List[Medico]:
         """Obtiene todos los médicos."""
         return self.db.query(Medico).all()
+
+    def get_filtered(self, matricula=None, nombre=None, especialidad=None):
+        query = self.db.query(Medico)  # modelo SQLAlchemy
+
+        if matricula:
+            query = query.filter(Medico.Matricula.ilike(f"%{matricula}%"))
+
+        if nombre:
+            patron = f"%{nombre}%"
+            query = query.filter(
+                or_(Medico.Nombre.ilike(patron), Medico.Apellido.ilike(patron))
+            )
+
+        if especialidad:
+            query = query.join(Medico.especialidades).filter(
+                Especialidad.descripcion == especialidad
+            )
+            # O si quieres substring:
+            # query = query.join(Medico.especialidades).filter(Especialidad.descripcion.ilike(f"%{especialidad}%"))
+
+        return query.all()
 
     def create(self, medico_data: Medico, especialidades_ids: List[int]) -> Medico:
         """Persiste un nuevo objeto Medico en la DB."""
@@ -62,3 +84,4 @@ class MedicoRepository:
         """Elimina un médico de la DB."""
         self.db.delete(medico)
         self.db.commit()
+        return True

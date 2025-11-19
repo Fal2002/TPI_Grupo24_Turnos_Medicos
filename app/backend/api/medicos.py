@@ -38,8 +38,13 @@ def crear_medico(
     response_model=List[MedicoOut],
     # dependencies=[Depends(role_required(["Administrador", "Médico"]))],
 )
-def obtener_medicos(medico_service: MedicoService = Depends(get_medico_service)):
-    return medico_service.obtener_medicos()
+def obtener_medicos(
+    matricula: Optional[str] = None,
+    nombre: Optional[str] = None,
+    especialidad: Optional[str] = None,
+    medico_service: MedicoService = Depends(get_medico_service),
+):
+    return medico_service.obtener_medicos(matricula, nombre, especialidad)
 
 
 @router.get("/{matricula}", response_model=MedicoOut)

@@ -33,8 +33,8 @@ class MedicoService:
         # Persistencia (Llama al Repository)
         return self.medico_repo.create(nuevo_medico, data.especialidades)
 
-    def obtener_medicos(self) -> List[Medico]:
-        return self.medico_repo.get_all()
+    def obtener_medicos(self, matricula=None, nombre=None, especialidad=None):
+        return self.medico_repo.get_filtered(matricula, nombre, especialidad)
 
     def obtener_medico(self, matricula: str) -> Medico:
         medico = self.medico_repo.get_by_matricula(matricula)
@@ -59,4 +59,4 @@ class MedicoService:
         )  # Reutilizamos la función que verifica 404
 
         # El Repository se encarga de la eliminación
-        self.medico_repo.delete(medico)
+        return self.medico_repo.delete(medico)
