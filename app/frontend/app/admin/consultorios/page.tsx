@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Pencil, Trash2, DoorOpen, Building2, Hash } from 'lucide-react';
+import { Plus, Pencil, Trash2, DoorOpen, Building2, Hash, Search } from 'lucide-react';
+import { getConsultorios } from '@/services/consultorios';
 
 interface Sucursal {
   id: number;
@@ -18,28 +19,44 @@ interface Consultorio {
 export default function ConsultoriosPage() {
   const [consultorios, setConsultorios] = useState<Consultorio[]>([]);
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Filtros
   const [sucursalFilter, setSucursalFilter] = useState(''); // ID como string
   const [numeroFilter, setNumeroFilter] = useState('');
 
-  useEffect(() => {
-    // Simulamos cargar ambas listas
-    setTimeout(() => {
-      setSucursales([
-        { id: 1, nombre: 'Sede Central' },
-        { id: 2, nombre: 'Anexo Norte' },
-      ]);
-      
-      setConsultorios([
-        { id: 1, sucursal_id: 1, numero: 101 },
-        { id: 2, sucursal_id: 1, numero: 102 },
-        { id: 3, sucursal_id: 2, numero: 10 },
-        { id: 4, sucursal_id: 2, numero: 11 },
-      ]);
+  const handleSearch = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (sucursalFilter) params.append('sucursal_id', sucursalFilter);
+      if (numeroFilter) params.append('numero', numeroFilter);
+      const data = await getConsultorios(Object.fromEntries(params));
+      setConsultorios(data.map((item: any) => ({
+        sucursal_id: item.Sucursal_Id,
+        numero: item.Numero,
+      })));
+    } catch (error) {
+      console.error('Error fetching consultorios:', error);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
+  };
+
+  useEffect(() => {
+    const fetchEspecialidades = async () => {
+      try {
+        const res = await fetch('http://localhost:8000/api/sucursales/sucursales');
+        const sucursalesData = await res.json();
+        setSucursales(sucursalesData.map((item: any) => ({
+          id: item.Id,
+          nombre: item.Nombre,
+        })));
+      } catch (error) {
+        console.error('Error fetching sucursales:', error);
+      }
+    };
+    fetchEspecialidades();
   }, []);
 
   // Helper para obtener nombre sucursal formateado
@@ -48,14 +65,6 @@ export default function ConsultoriosPage() {
     return suc ? `(${suc.id}) ${suc.nombre}` : `ID: ${id}`;
   };
 
-  const filteredData = consultorios.filter((item) => {
-    // Filtro por sucursal (si hay una seleccionada)
-    const matchesSucursal = sucursalFilter ? item.sucursal_id.toString() === sucursalFilter : true;
-    // Filtro por número
-    const matchesNumero = item.numero.toString().includes(numeroFilter);
-    
-    return matchesSucursal && matchesNumero;
-  });
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -97,6 +106,16 @@ export default function ConsultoriosPage() {
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none text-gray-700"
           />
         </div>
+        <div className="md:col-span-2">
+            <button 
+                onClick={handleSearch}
+                disabled={loading}
+                className="w-full bg-gray-800 hover:bg-gray-900 text-white py-2.5 rounded-lg flex items-center justify-center gap-2 disabled:opacity-70"
+            >
+                {loading ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> : <Search size={18} />}
+                Buscar
+            </button>
+        </div>
       </div>
 
       {/* Tabla */}
@@ -112,7 +131,7 @@ export default function ConsultoriosPage() {
           <tbody className="divide-y divide-gray-200">
             {loading ? (
               <tr><td colSpan={3} className="p-8 text-center text-gray-500">Cargando...</td></tr>
-            ) : filteredData.map((cons) => (
+            ) : consultorios.map((cons) => (
               <tr key={cons.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm text-gray-700 font-medium">
                   {getSucursalDisplay(cons.sucursal_id)}

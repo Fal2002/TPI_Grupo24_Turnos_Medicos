@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Stethoscope, AlertCircle, X, Plus } from 'lucide-react';
+import { ArrowLeft, Save, Stethoscope, AlertCircle, X, Plus, Mail } from 'lucide-react';
 
 // Interfaz para el Dropdown
 interface Especialidad {
@@ -113,7 +113,9 @@ export default function NuevoMedicoPage() {
         Matricula: formData.matricula.toString(), 
         Nombre: formData.nombre,
         Apellido: formData.apellido,
-        especialidades: formData.especialidades // Lista de IDs [1, 2]
+        especialidades: formData.especialidades, // Lista de IDs [1, 2]
+        email_login: formData.matricula.toString() + "@clinica.com", // Valor por defecto temporal
+        password_temporal: formData.matricula.toString()
       };
 
       const response = await fetch('http://localhost:8000/api/medicos/medicos/', {
@@ -179,12 +181,12 @@ export default function NuevoMedicoPage() {
                   Matrícula
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   id="matricula"
                   name="matricula"
                   value={formData.matricula}
                   onChange={handleChange}
-                  placeholder="Ej: 12345"
+                  placeholder="Ej: AC12345XY"
                   className="text-gray-700 w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 />
               </div>

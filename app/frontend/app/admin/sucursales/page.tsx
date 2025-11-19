@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Plus, Pencil, Trash2, Building2, MapPin, Hash } from 'lucide-react';
-import { getSucursales } from '@/services/sucursales';
+import { Search, Plus, Pencil, Trash2, Building2, MapPin, Hash, AlertTriangle } from 'lucide-react';
+import { getSucursales, deleteSucursal } from '@/services/sucursales';
 
 interface Sucursal {
   id: number;
@@ -19,6 +19,11 @@ export default function SucursalesPage() {
   const [idFilter, setIdFilter] = useState('');
   const [nombreFilter, setNombreFilter] = useState('');
   const [direccionFilter, setDireccionFilter] = useState('');
+
+  // --- Estados del Modal de Eliminación ---
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [sucursalToDelete, setSucursalToDelete] = useState<Sucursal | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSearch = async () => {
     setLoading(true);
@@ -37,6 +42,36 @@ export default function SucursalesPage() {
       console.error('Error fetching sucursales:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // --- Lógica de Eliminación ---
+  const handleOpenDeleteModal = (sucursal: Sucursal) => {
+    setSucursalToDelete(sucursal);
+    setShowDeleteModal(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setShowDeleteModal(false);
+    setSucursalToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!sucursalToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteSucursal(sucursalToDelete.id);
+      
+      // Actualizamos la tabla localmente
+      setSucursales(sucursales.filter(s => s.id !== sucursalToDelete.id));
+      
+      handleCloseDeleteModal();
+    } catch (error) {
+      console.error("Error al eliminar", error);
+      alert("Hubo un error al intentar eliminar la sucursal.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -128,6 +163,7 @@ export default function SucursalesPage() {
                         </Link>
                         
                         <button
+                          onClick={() => handleOpenDeleteModal(sucursal)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Eliminar"
                         >
@@ -140,6 +176,41 @@ export default function SucursalesPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Modal de Confirmación de Eliminación */}
+      {showDeleteModal && sucursalToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
+            
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">¿Eliminar sucursal?</h3>
+              <p className="text-gray-500 text-sm mb-6">
+                Esta acción es irreversible. Se eliminará la sucursal <strong>{sucursalToDelete.nombre}</strong>.
+              </p>
+            </div>
+
+            <div className="bg-gray-50 px-6 py-4 flex gap-3 justify-end border-t border-gray-100">
+              <button
+                onClick={handleCloseDeleteModal}
+                className="px-4 py-2 rounded-lg text-gray-700 font-medium hover:bg-gray-200 transition-colors"
+                disabled={isDeleting}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30 flex items-center"
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

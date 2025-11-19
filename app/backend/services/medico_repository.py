@@ -48,12 +48,12 @@ class MedicoRepository:
 
         return query.all()
 
-    def create(self, medico_data: Medico, especialidades_ids: List[int]) -> Medico:
+    def create(self, medico_data: Medico, especialidades: List[int]) -> Medico:
         """Persiste un nuevo objeto Medico en la DB."""
         # Convertir IDs en objetos Especialidad
         especialidades_objs = (
             self.db.query(Especialidad)
-            .filter(Especialidad.Id_especialidad.in_(especialidades_ids))
+            .filter(Especialidad.Id_especialidad.in_(especialidades))
             .all()
         )
         medico_data.especialidades = especialidades_objs

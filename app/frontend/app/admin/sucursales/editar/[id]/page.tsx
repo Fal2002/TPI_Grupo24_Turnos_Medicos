@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, Building2 } from 'lucide-react';
+import { getSucursalById, updateSucursal } from '@/services/sucursales';
 
 export default function EditarSucursalPage() {
   const router = useRouter();
@@ -18,20 +19,40 @@ export default function EditarSucursalPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setTimeout(() => {
-      setFormData({
-        id: Number(id),
-        nombre: 'Sede Central',
-        direccion: 'Av. Siempre Viva 742'
-      });
-      setLoading(false);
-    }, 500);
-  }, [id]);
+    const fetchSucursal = async () => {
+      try {
+        const data = await getSucursalById(Number(id));
+        setFormData({
+          id: data.Id,
+          nombre: data.Nombre,
+          direccion: data.Direccion
+        });
+      } catch (error) {
+        console.error('Error fetching sucursal:', error);
+        alert('Error al cargar la sucursal');
+        router.push('/admin/sucursales');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchSucursal();
+    }
+  }, [id, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Logic to PUT update
-    router.push('/admin/sucursales');
+    try {
+      await updateSucursal(Number(id), {
+        Nombre: formData.nombre,
+        Direccion: formData.direccion
+      });
+      router.push('/admin/sucursales');
+    } catch (error) {
+      console.error('Error updating sucursal:', error);
+      alert('Error al actualizar la sucursal');
+    }
   };
 
   if (loading) return <div className="p-8 text-center">Cargando sucursal...</div>;

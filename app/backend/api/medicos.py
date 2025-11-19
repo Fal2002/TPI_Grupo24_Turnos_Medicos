@@ -14,8 +14,9 @@ router = APIRouter(prefix="/medicos", tags=["Medicos"])
 
 # (Esto se encarga de crear el objeto Service con todas sus dependencias)
 def get_medico_service(db: Session = Depends(get_db)) -> MedicoService:
-    repo = MedicoRepository(db)
-    return MedicoService(repo)
+    medico_repo = MedicoRepository(db)
+    user_repo = UserRepository(db)
+    return MedicoService(medico_repo, user_repo)
 
 
 @router.post(

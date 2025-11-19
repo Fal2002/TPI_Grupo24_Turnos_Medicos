@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, DoorOpen, AlertCircle } from 'lucide-react';
+import { getSucursales } from '@/services/sucursales';
+import { createConsultorio } from '@/services/consultorios';
 
 interface Sucursal {
   id: number;
@@ -19,14 +21,21 @@ export default function NuevoConsultorioPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setTimeout(() => {
-      setSucursales([
-        { id: 1, nombre: 'Sede Central' },
-        { id: 2, nombre: 'Anexo Norte' },
-        { id: 3, nombre: 'Clínica Oeste' },
-      ]);
-      setLoadingData(false);
-    }, 500);
+    const fetchSucursales = async () => {
+      try {
+        const data = await getSucursales();
+        setSucursales(data.map((item: any) => ({
+          id: item.Id,
+          nombre: item.Nombre,
+        })));
+      } catch (error) {
+        console.error('Error fetching sucursales:', error);
+        setError('Error al cargar las sucursales.');
+      } finally {
+        setLoadingData(false);
+      }
+    };
+    fetchSucursales();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,17 +50,13 @@ export default function NuevoConsultorioPage() {
     }
 
     try {
-      await fetch('http://localhost:8000/consultorios', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sucursal_id: Number(formData.sucursal_id),
-          numero: Number(formData.numero)
-        }),
+      await createConsultorio({
+        Sucursal_Id: formData.sucursal_id,
+        Numero: formData.numero,
       });
       router.push('/admin/consultorios');
     } catch (err) {
-      setError('Error al crear el consultorio.');
+      setError('Error al guardar el consultorio: ' + (err instanceof Error ? err.message : 'Desconocido'));
     } finally {
       setLoading(false);
     }

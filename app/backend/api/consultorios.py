@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -14,8 +15,12 @@ def crear(payload: ConsultorioCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[ConsultorioOut])
-def listar(db: Session = Depends(get_db)):
-    return consultorio_service.obtener_consultorios(db)
+def listar(
+    db: Session = Depends(get_db),
+    sucursal_id: Optional[int] = None,
+    numero: Optional[int] = None,
+):
+    return consultorio_service.obtener_consultorios(db, sucursal_id, numero)
 
 
 @router.get("/{numero}/{sucursal_id}", response_model=ConsultorioOut)

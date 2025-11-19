@@ -11,7 +11,7 @@ from app.backend.services.exceptions import (
     RecursoNoEncontradoError,
     EmailDuplicadoError,
 )
-from typing import List
+from typing import List, Optional
 
 
 class MedicoService:
@@ -63,10 +63,15 @@ class MedicoService:
         )
 
         # Persistencia del Medico (el repo hace el commit final)
-        return self.medico_repo.create(nuevo_medico)
+        return self.medico_repo.create(nuevo_medico, data.especialidades)
 
-    def obtener_medicos(self) -> List[Medico]:
-        return self.medico_repo.get_all()
+    def obtener_medicos(
+        self,
+        matricula: Optional[str],
+        nombre: Optional[str],
+        especialidad: Optional[int],
+    ) -> List[Medico]:
+        return self.medico_repo.get_filtered(matricula, nombre, especialidad)
 
     def obtener_medico(self, matricula: str) -> Medico:
         medico = self.medico_repo.get_by_matricula(matricula)
@@ -87,4 +92,4 @@ class MedicoService:
         # Opcional: Eliminar también el registro de User
         # self.user_repo.delete_by_id(medico.User_Id)
 
-        self.medico_repo.delete(medico)
+        return self.medico_repo.delete(medico)

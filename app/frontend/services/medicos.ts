@@ -44,7 +44,7 @@ export async function createMedico(data: any) {
   return res.json();
 }
 
-export async function updateMedico(matricula: number, data: any) {
+export async function updateMedico(matricula: string, data: any) {
   const res = await fetch(`${API_URL}/medicos/${matricula}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -55,7 +55,7 @@ export async function updateMedico(matricula: number, data: any) {
   return res.json();
 }
 
-export async function deleteMedico(matricula: number) {
+export async function deleteMedico(matricula: string) {
   const res = await fetch(`${API_URL}/medicos/${matricula}`, {
     method: "DELETE",
   });
@@ -64,7 +64,7 @@ export async function deleteMedico(matricula: number) {
   return res.json();
 }
 
-export async function getEspecialidadesMedico(matricula: number | string) {
+export async function getEspecialidadesMedico(matricula: string) {
   const res = await fetch(`${API_URL}/medicos/${matricula}/especialidades`);
   if (!res.ok) throw new Error("Error al obtener especialidades del médico");
   return res.json();

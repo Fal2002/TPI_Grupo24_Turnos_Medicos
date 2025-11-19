@@ -99,7 +99,7 @@ export default function MedicosPage() {
     try {
       // Convertimos a número si tu servicio espera number, o string si espera string.
       // Según tu servicio anterior, deleteMedico recibe 'matricula'.
-      await deleteMedico(Number(medicoToDelete.Matricula));
+      await deleteMedico(medicoToDelete.Matricula);
       
       // Actualizamos la tabla localmente
       setMedicos(medicos.filter(m => m.Matricula !== medicoToDelete.Matricula));
