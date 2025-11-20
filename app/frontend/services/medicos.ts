@@ -1,5 +1,7 @@
 // services/medicos.ts
 
+import { headers } from "next/dist/server/request/headers";
+
 // CAMBIO IMPORTANTE: Quitamos el "/api/medicos" de la base si vamos a agregar "/medicos" abajo.
 // O dejamos solo la base.
 // Opción recomendada: Apuntar a la raíz del servidor
@@ -9,6 +11,7 @@ interface MedicoFilters {
   matricula?: string;
   nombre?: string;
   especialidad?: string;
+  user_id?: string;
 }
 
 export async function getMedicos(filters?: MedicoFilters) {
@@ -32,6 +35,15 @@ export async function getMedico(matricula: number | string) {
   if (!res.ok) throw new Error("Médico no encontrado");
   return res.json();
 }
+
+export async function getMedicoPorUserId() {
+  const headersList = headers();
+  const userId = (await headersList).get('x-user-id');
+  const res = await fetch(`${API_URL}/medicos/user/${userId}`);
+  if (!res.ok) throw new Error("Médico no encontrado por user_id");
+  return res.json();
+}
+
 
 export async function createMedico(data: any) {
   const res = await fetch(`${API_URL}/medicos`, {

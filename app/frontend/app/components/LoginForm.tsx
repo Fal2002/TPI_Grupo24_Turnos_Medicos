@@ -12,9 +12,9 @@ type Role = 'paciente' | 'medico' | 'admin';
 
 const TABS_CONFIG = [
   // ... (la configuración de TABS se mantiene igual)
-  { id: 'paciente' as Role, label: 'Soy Paciente', icon: User, endpoint: 'http://localhost:8000/pacientes/login', redirectPath: '/dashboard', identifierField: 'dni', identifierLabel: 'DNI', identifierType: 'text', identifierIcon: Fingerprint },
-  { id: 'medico' as Role, label: 'Soy Médico', icon: Stethoscope, endpoint: 'http://localhost:8000/medicos/login', redirectPath: '/medico/agenda', identifierField: 'matricula', identifierLabel: 'Matrícula Profesional', identifierType: 'text', identifierIcon: FileBadge },
-  { id: 'admin' as Role, label: 'Soy Admin', icon: ShieldCheck, endpoint: 'http://localhost:8000/admins/login', redirectPath: '/admin/dashboard', identifierField: 'legajo', identifierLabel: 'N° de Legajo', identifierType: 'text', identifierIcon: FileKey },
+  { id: 'paciente' as Role, label: 'Soy Paciente', icon: User, endpoint: 'http://localhost:8000/api/auth/login', redirectPath: '/portal', identifierField: 'email', identifierLabel: 'DNI', identifierType: 'text', identifierIcon: Fingerprint },
+  { id: 'medico' as Role, label: 'Soy Médico', icon: Stethoscope, endpoint: 'http://localhost:8000/api/auth/login', redirectPath: '/medico', identifierField: 'email', identifierLabel: 'Matrícula Profesional', identifierType: 'text', identifierIcon: FileBadge },
+  { id: 'admin' as Role, label: 'Soy Admin', icon: ShieldCheck, endpoint: 'http://localhost:8000/api/auth/login', redirectPath: '/admin', identifierField: 'email', identifierLabel: 'N° de Legajo', identifierType: 'text', identifierIcon: FileKey },
 ];
 
 export default function LoginForm() {
@@ -53,7 +53,8 @@ export default function LoginForm() {
 
     try {
       const body = { [currentTab.identifierField]: identifier, password: password };
-      const response = await fetch(currentTab.endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) });
+      const response = await fetch(currentTab.endpoint, 
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || `Error al iniciar sesión como ${currentTab.label}`);
       router.push(currentTab.redirectPath);

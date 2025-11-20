@@ -22,6 +22,14 @@ class MedicoRepository:
             .filter(Medico.Matricula == matricula)
             .first()
         )
+    def get_by_user_id(self, user_id: int) -> Medico | None:
+        """Obtiene un médico por su user_id."""
+        return (
+            self.db.query(Medico)
+            .options(joinedload(Medico.user))
+            .filter(Medico.User_Id == user_id)
+            .first()
+        )
 
     def get_all(self) -> List[Medico]:
         """Obtiene todos los médicos."""

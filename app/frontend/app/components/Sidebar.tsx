@@ -23,7 +23,7 @@ const LogoutButton = () => {
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     try {
-      await fetch("http://localhost:8000/users/logout", {
+      await fetch("http://localhost:8000/api/auth/logout", {
         method: "POST",
         credentials: "include",
       });

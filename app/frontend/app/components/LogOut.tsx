@@ -1,8 +1,8 @@
 'use client'
-export default function LogoutButton() {
+export default function LogOutButton() {
   const handleLogout = async (e: React.MouseEvent) => {
     
-    await fetch("http://localhost:8000/users/logout", {
+    await fetch("http://localhost:8000/api/auth/logout", {
       method: "POST",
       credentials: "include", // necesario para que se envíen las cookies
     })

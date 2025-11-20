@@ -28,15 +28,29 @@ const medicoEspecialidades = ['Cardiología', 'Clínica General'];
 
 // El componente LogoutButton puede ser el mismo o importado de otro archivo
 const LogoutButton = () => {
-  const handleLogout = async () => { /* ... (lógica sin cambios) */ };
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      await fetch("http://localhost:8000/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    }
+  };
+
   return (
-    <button onClick={handleLogout} className="flex items-center w-full p-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white">
+    <button
+      onClick={handleLogout}
+      className="flex items-center w-full p-3 rounded-lg transition-colors text-gray-400 hover:bg-gray-700 hover:text-white"
+    >
       <LogOut className="mr-3" size={20} />
       <span>Cerrar sesión</span>
     </button>
   );
 };
-
 export default function SidebarMed() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
