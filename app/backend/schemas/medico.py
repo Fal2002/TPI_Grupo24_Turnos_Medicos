@@ -1,26 +1,16 @@
 from pydantic import BaseModel
 from typing import Optional, List
 
-
 class MedicoBase(BaseModel):
+    Matricula: str
     Nombre: str
     Apellido: str
 
-
 class MedicoCreate(MedicoBase):
-    Matricula: str
-    especialidades: List[int] = []
-
-
-class MedicoUpdate(BaseModel):
-    Nombre: Optional[str] = None
-    Apellido: Optional[str] = None
-    especialidades: Optional[List[int]] = None  # <--- Nuevo campo opcional
-
+    especialidades: List[int] 
 
 class MedicoOut(MedicoBase):
-    Matricula: str
-    especialidades: List[int]
+    especialidades: List[int] 
 
     class Config:
-        from_attributes = True
+        orm_mode = True

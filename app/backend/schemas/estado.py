@@ -1,12 +1,12 @@
 from pydantic import BaseModel
 
-class DrogaBase(BaseModel):
+class EstadoBase(BaseModel):
     Descripcion: str
 
-class DrogaCreate(DrogaBase):
+class EstadoCreate(EstadoBase):
     pass
 
-class DrogaOut(DrogaBase):
+class EstadoOut(EstadoBase):
     Id: int
 
     class Config:

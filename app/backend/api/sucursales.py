@@ -1,33 +1,30 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-
 from app.backend.db.db import get_db
+from app.backend.services.sucursal_service import (
+    get_sucursales, get_sucursal_by_id, create_sucursal,
+    update_sucursal, delete_sucursal
+)
 from app.backend.schemas.sucursal import SucursalCreate, SucursalOut
-from app.backend.services import sucursal_service
 
 router = APIRouter(prefix="/sucursales", tags=["Sucursales"])
 
-
-@router.post("/", response_model=SucursalOut)
-def crear_sucursal(payload: SucursalCreate, db: Session = Depends(get_db)):
-    return sucursal_service.crear_sucursal(db, payload)
-
-
 @router.get("/", response_model=list[SucursalOut])
-def listar_sucursales(db: Session = Depends(get_db)):
-    return sucursal_service.listar_sucursales(db)
-
+def listar(db: Session = Depends(get_db)):
+    return get_sucursales(db)
 
 @router.get("/{id}", response_model=SucursalOut)
-def obtener_sucursal(id: int, db: Session = Depends(get_db)):
-    return sucursal_service.obtener_sucursal(db, id)
+def obtener(id: int, db: Session = Depends(get_db)):
+    return get_sucursal_by_id(db, id)
 
+@router.post("/", response_model=SucursalOut)
+def crear(data: SucursalCreate, db: Session = Depends(get_db)):
+    return create_sucursal(db, data)
 
 @router.put("/{id}", response_model=SucursalOut)
-def actualizar_sucursal(id: int, payload: SucursalCreate, db: Session = Depends(get_db)):
-    return sucursal_service.actualizar_sucursal(db, id, payload)
-
+def actualizar(id: int, data: SucursalCreate, db: Session = Depends(get_db)):
+    return update_sucursal(db, id, data)
 
 @router.delete("/{id}")
-def eliminar_sucursal(id: int, db: Session = Depends(get_db)):
-    return sucursal_service.eliminar_sucursal(db, id)
+def eliminar(id: int, db: Session = Depends(get_db)):
+    return delete_sucursal(db, id)

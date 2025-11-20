@@ -1,39 +1,29 @@
 from sqlalchemy.orm import Session
-from app.backend.models.models import Especialidad 
-from app.backend.schemas.especialidad import EspecialidadCreate, EspecialidadUpdate
+from fastapi import HTTPException
+from app.backend.models.models import Especialidad
+from app.backend.schemas.especialidad import EspecialidadCreate
 
-def crear_especialidad(db: Session, payload: EspecialidadCreate):
-    nueva = Especialidad(
-        descripcion=payload.descripcion
-    )
+def get_especialidades(db: Session):
+    return db.query(Especialidad).all()
+
+
+def get_especialidad_by_id(db: Session, id: int):
+    esp = db.query(Especialidad).filter(Especialidad.Id_especialidad == id).first()
+    if not esp:
+        raise HTTPException(404, "Especialidad no encontrada")
+    return esp
+
+
+def create_especialidad(db: Session, data: EspecialidadCreate):
+    nueva = Especialidad(**data.dict())
     db.add(nueva)
     db.commit()
     db.refresh(nueva)
     return nueva
 
-def obtener_especialidades(db: Session):
-    return db.query(Especialidad).all()
 
-def obtener_especialidad(db: Session, especialidad_id: int):
-    return db.query(Especialidad).filter(Especialidad.Id_especialidad == especialidad_id).first()
-
-def actualizar_especialidad(db: Session, especialidad_id: int, payload: EspecialidadUpdate):
-    esp = obtener_especialidad(db, especialidad_id)
-    if not esp:
-        return None
-    
-    if payload.descripcion is not None:
-        esp.descripcion = payload.descripcion
-
-    db.commit()
-    db.refresh(esp)
-    return esp
-
-def eliminar_especialidad(db: Session, especialidad_id: int):
-    esp = obtener_especialidad(db, especialidad_id)
-    if not esp:
-        return False
-
+def delete_especialidad(db: Session, id: int):
+    esp = get_especialidad_by_id(db, id)
     db.delete(esp)
     db.commit()
-    return True
+    return {"detail": "Especialidad eliminada"}

@@ -1,44 +1,30 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from typing import List
 from app.backend.db.db import get_db
-from app.backend.schemas.paciente import PacienteCreate, PacienteOut, PacienteUpdate
-from app.backend.services import paciente_service
+from app.backend.services.paciente_service import (
+    get_pacientes, get_paciente_by_id, create_paciente,
+    update_paciente, delete_paciente
+)
+from app.backend.schemas.paciente import PacienteCreate, PacienteOut
 
 router = APIRouter(prefix="/pacientes", tags=["Pacientes"])
 
+@router.get("/", response_model=list[PacienteOut])
+def listar(db: Session = Depends(get_db)):
+    return get_pacientes(db)
+
+@router.get("/{id}", response_model=PacienteOut)
+def obtener(id: int, db: Session = Depends(get_db)):
+    return get_paciente_by_id(db, id)
+
 @router.post("/", response_model=PacienteOut)
-def crear_paciente(payload: PacienteCreate, db: Session = Depends(get_db)):
-    paciente = paciente_service.crear_paciente(db, payload)
-    if paciente is None:
-        raise HTTPException(status_code=400, detail="El email ya está registrado")
-    return paciente
+def crear(data: PacienteCreate, db: Session = Depends(get_db)):
+    return create_paciente(db, data)
 
+@router.put("/{id}", response_model=PacienteOut)
+def actualizar(id: int, data: PacienteCreate, db: Session = Depends(get_db)):
+    return update_paciente(db, id, data)
 
-@router.get("/", response_model=List[PacienteOut])
-def obtener_pacientes(db: Session = Depends(get_db)):
-    return paciente_service.obtener_pacientes(db)
-
-
-@router.get("/{nro}", response_model=PacienteOut)
-def obtener_paciente(nro: int, db: Session = Depends(get_db)):
-    paciente = paciente_service.obtener_paciente(db, nro)
-    if not paciente:
-        raise HTTPException(status_code=404, detail="Paciente no encontrado")
-    return paciente
-
-
-@router.put("/{nro}", response_model=PacienteOut)
-def actualizar_paciente(nro: int, payload: PacienteUpdate, db: Session = Depends(get_db)):
-    paciente = paciente_service.actualizar_paciente(db, nro, payload)
-    if not paciente:
-        raise HTTPException(status_code=404, detail="Paciente no encontrado")
-    return paciente
-
-
-@router.delete("/{nro}")
-def eliminar_paciente(nro: int, db: Session = Depends(get_db)):
-    ok = paciente_service.eliminar_paciente(db, nro)
-    if not ok:
-        raise HTTPException(status_code=404, detail="Paciente no encontrado")
-    return {"msg": "Paciente eliminado correctamente"}
+@router.delete("/{id}")
+def eliminar(id: int, db: Session = Depends(get_db)):
+    return delete_paciente(db, id)

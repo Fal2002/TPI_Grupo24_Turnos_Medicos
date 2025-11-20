@@ -1,31 +1,43 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from typing import Optional
 from datetime import date
 
-# ============================
-# SCHEMA DE ENTRADA (POST)
-# ============================
+class TurnoBase(BaseModel):
+    Fecha: date
+    Hora: str
+    Paciente_nroPaciente: int
+    Medico_Matricula: str
+    Especialidad_Id: int
+    Estado_Id: Optional[int]
+    Consultorio_Numero: Optional[int]
+    Consultorio_Sucursal_Id: Optional[int]
+    Duracion: Optional[int]
+    Motivo: Optional[str]
+    Diagnostico: Optional[str]
+
 class TurnoCreate(BaseModel):
-    fecha: date
-    hora: str
-    paciente_nroPaciente: int
-    medico_matricula: str
-    especialidad_id: int
-    sucursal_id: int | None = None
-    duracion: int | None = None
-    motivo: str | None = None
+    Fecha: date
+    Hora: str
+    Paciente_nroPaciente: int
+    Medico_Matricula: str
+    Especialidad_Id: int
+    Consultorio_Numero: int
+    Consultorio_Sucursal_Id: int
+    Duracion: Optional[int]
+    Motivo: Optional[str]
+    Diagnostico: Optional[str]
 
+class TurnoUpdate(BaseModel):
+    Medico_Matricula: Optional[str]
+    Especialidad_Id: Optional[int]
+    Consultorio_Numero: Optional[int]
+    Consultorio_Sucursal_Id: Optional[int]
+    Duracion: Optional[int]
+    Motivo: Optional[str]
+    Diagnostico: Optional[str]
+    Estado_Id: Optional[int]
 
-# ============================
-# SCHEMA DE SALIDA
-# ============================
-class TurnoOut(BaseModel):
-    fecha: str = Field(alias="Fecha")
-    hora: str = Field(alias="Hora")
-    paciente_nroPaciente: int = Field(alias="Paciente_nroPaciente")
-    medico_matricula: str = Field(alias="Medico_Matricula")
-    especialidad_id: int = Field(alias="Especialidad_Id")
-    estado: str | None = Field(default=None)   # <-- se usa la propiedad @property "estado"
-
+class TurnoOut(TurnoBase):
+    estado: Optional[str]
     class Config:
-        from_attributes = True
-        populate_by_name = True
+        orm_mode = True

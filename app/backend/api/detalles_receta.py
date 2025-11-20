@@ -1,26 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.backend.db.db import get_db
-from app.backend.schemas.detalle_receta import DetalleRecetaCreate, DetalleRecetaOut
-from app.backend.services import detalle_receta_service
+from app.backend.services.detalle_receta_service import (
+    agregar_medicamento_a_receta, eliminar_detalle_receta
+)
 
 router = APIRouter(prefix="/detalles-receta", tags=["Detalles Receta"])
 
-@router.post("/", response_model=DetalleRecetaOut)
-def crear_detalle(payload: DetalleRecetaCreate, db: Session = Depends(get_db)):
-    try:
-        return detalle_receta_service.crear_detalle_receta(db, payload)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error al crear detalle: {e}")
 
-@router.get("/", response_model=list[DetalleRecetaOut])
-def listar_detalles(db: Session = Depends(get_db)):
-    return detalle_receta_service.listar_detalles(db)
+@router.post("/{receta_id}/{medicamento_id}")
+def agregar(receta_id: int, medicamento_id: int, db: Session = Depends(get_db)):
+    return agregar_medicamento_a_receta(db, receta_id, medicamento_id)
 
-@router.get("/{receta_id}/{medicamento_id}", response_model=DetalleRecetaOut)
-def obtener_detalle(receta_id: int, medicamento_id: int, db: Session = Depends(get_db)):
-    return detalle_receta_service.obtener_detalle(db, receta_id, medicamento_id)
 
 @router.delete("/{receta_id}/{medicamento_id}")
-def eliminar_detalle(receta_id: int, medicamento_id: int, db: Session = Depends(get_db)):
-    return detalle_receta_service.eliminar_detalle(db, receta_id, medicamento_id)
+def eliminar(receta_id: int, medicamento_id: int, db: Session = Depends(get_db)):
+    eliminar_detalle_receta(db, receta_id, medicamento_id)
+    return {"mensaje": "Medicamento eliminado de la receta"}

@@ -1,42 +1,43 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
-from sqlalchemy.exc import IntegrityError
-from app.backend.models.models import DetalleReceta
-from app.backend.schemas.detalle_receta import DetalleRecetaCreate
-
-def crear_detalle_receta(db: Session, data: DetalleRecetaCreate):
-    detalle = DetalleReceta(
-        Receta_Id=data.Receta_Id,
-        Medicamento_Id=data.Medicamento_Id,
-    )
-    
-    db.add(detalle)
-    try:
-        db.commit()
-        db.refresh(detalle)
-        return detalle
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=400,
-            detail="Detalle ya existe o Receta/Medicamento no son válidos."
-        )
+from app.backend.models.models import DetalleReceta, Receta, Medicamento
 
 
-def listar_detalles(db: Session):
-    return db.query(DetalleReceta).all()
+def agregar_medicamento_a_receta(db: Session, receta_id: int, medicamento_id: int):
+    receta = db.query(Receta).filter(Receta.Id == receta_id).first()
+    if not receta:
+        raise Exception("La receta no existe")
 
-def obtener_detalle(db: Session, receta_id: int, medicamento_id: int):
-    det = db.query(DetalleReceta).filter(
+    medicamento = db.query(Medicamento).filter(Medicamento.Id == medicamento_id).first()
+    if not medicamento:
+        raise Exception("Medicamento no existe")
+
+    existe = db.query(DetalleReceta).filter(
         DetalleReceta.Receta_Id == receta_id,
         DetalleReceta.Medicamento_Id == medicamento_id
     ).first()
-    if not det:
-        raise HTTPException(status_code=404, detail="Detalle no encontrado")
-    return det
 
-def eliminar_detalle(db: Session, receta_id: int, medicamento_id: int):
-    det = obtener_detalle(db, receta_id, medicamento_id)
-    db.delete(det)
+    if existe:
+        raise Exception("El medicamento ya está asociado a la receta")
+
+    detalle = DetalleReceta(
+        Receta_Id=receta_id,
+        Medicamento_Id=medicamento_id
+    )
+    db.add(detalle)
     db.commit()
-    return {"msg": "Detalle de receta eliminado correctamente"}
+    db.refresh(detalle)
+    return detalle
+
+
+def eliminar_detalle_receta(db: Session, receta_id: int, medicamento_id: int):
+    detalle = db.query(DetalleReceta).filter(
+        DetalleReceta.Receta_Id == receta_id,
+        DetalleReceta.Medicamento_Id == medicamento_id
+    ).first()
+
+    if not detalle:
+        raise Exception("Detalle no encontrado")
+
+    db.delete(detalle)
+    db.commit()
+    return True
