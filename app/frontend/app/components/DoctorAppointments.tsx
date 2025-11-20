@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, FormEvent } from 'react';
-import { Calendar, Clock, User, Edit, Trash2, Check, Play, Plus, X, Pill, Eye, FileText } from 'lucide-react';
+import { Calendar, Clock, User, Edit, Trash2, Check, Play, Plus, X, Pill, Eye, FileText, UserX, Megaphone, Stethoscope } from 'lucide-react';
 import { useMedico } from '../contexts/MedicoContext'; // Ajusta la ruta a tu contexto
 import { getTurnosPorMedico, cambiarEstadoTurno, actualizarTurno } from '@/services/turnos'; // Ajusta la ruta a tu servicio
 import { getPacienteByNumero } from '@/services/pacientes';
@@ -15,7 +15,7 @@ interface Turno {
   Hora: string;
   Motivo: string | null;
   Diagnostico: string | null;
-  estado: 'Confirmado' | 'Pendiente' | 'Atendido' | 'Finalizado' | 'Cancelado' | 'Ausente'; // Cambiado de Estado a estado
+  estado: 'Confirmado' | 'Pendiente' | 'Atendido' | 'Finalizado' | 'Cancelado' | 'Ausente' | 'Anunciado'; // Cambiado de Estado a estado
   Paciente_nroPaciente: number;
   paciente_nombre?: string;
   paciente_apellido?: string;
@@ -32,7 +32,7 @@ type Appointment = {
   specialty: string;
   dateTime: string;
   reason: string; // 1. Añadimos el motivo
-  status: 'Confirmado' | 'Pendiente' | 'Atendido' | 'Finalizado' | 'Cancelado' | 'Ausente';
+  status: 'Confirmado' | 'Pendiente' | 'Atendido' | 'Finalizado' | 'Cancelado' | 'Ausente' | 'Anunciado';
   diagnosis: string;
   prescriptions: Prescription[];
 };
@@ -52,6 +52,7 @@ const statusStyles: Record<Appointment['status'], string> = {
   Atendido: 'border-teal-500 animate-pulse', Finalizado: 'border-green-500',
   Cancelado: 'border-gray-400 opacity-60',
     Ausente: 'border-red-500 opacity-60',
+    Anunciado: 'border-purple-500',
 };
 
 // --- Componente Principal ---
@@ -60,8 +61,9 @@ export default function DoctorAppointments() {
 
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [modal, setModal] = useState<'Cancelado' | 'Atendido' | 'Finalizado' | 'prescriptions' | 'edit' | null>(null);
+  const [modal, setModal] = useState<'Cancelado' | 'Atendido' | 'Finalizado' | 'Ausente' | 'Anunciado' | 'prescriptions' | 'edit' | null>(null);
   const [selectedTurno, setSelectedTurno] = useState<Turno | null>(null);
+  const [activeTab, setActiveTab] = useState<'confirmados' | 'pendientes' | 'atendidos' | 'historial'>('confirmados');
   
   // --- Estado para Recetas y Medicamentos ---
   const [recetas, setRecetas] = useState<(RecetaOut & { medicamentos: MedicamentoOut[] })[]>([]);
@@ -113,6 +115,16 @@ export default function DoctorAppointments() {
       .filter(turno => turno.Especialidad_Id === activeSpecialty.Id_especialidad)
       .sort((a, b) => new Date(`${a.Fecha}T${a.Hora}`).getTime() - new Date(`${b.Fecha}T${b.Hora}`).getTime());
   }, [turnos, activeSpecialty]);
+
+  const tabTurnos = useMemo(() => {
+    return filteredTurnos.filter(turno => {
+      if (activeTab === 'confirmados') return ['Confirmado', 'Anunciado'].includes(turno.estado);
+      if (activeTab === 'pendientes') return turno.estado === 'Pendiente';
+      if (activeTab === 'atendidos') return turno.estado === 'Atendido';
+      if (activeTab === 'historial') return ['Finalizado', 'Cancelado', 'Ausente'].includes(turno.estado);
+      return false;
+    });
+  }, [filteredTurnos, activeTab]);
   
   // --- Manejadores de Estado y Acciones ---
   const handleOpenModal = (type: typeof modal, turno: Turno) => {
@@ -138,6 +150,7 @@ export default function DoctorAppointments() {
       'Finalizado': 'finalizar',
       'Confirmado': 'confirmar',
       'Ausente': 'marcarAusente',
+      'Anunciado': 'anunciar',
       // 'reprogramar' y 'anunciar' no están en la UI actual pero podrían agregarse
     };
 
@@ -315,9 +328,52 @@ export default function DoctorAppointments() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Mis Turnos de {activeSpecialty?.descripcion || ' '}</h2>
-      {filteredTurnos.length > 0 ? (
-        filteredTurnos.map(turno => {
+      {/* Tabs de Navegación */}
+      <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6">
+        <button
+          onClick={() => setActiveTab('confirmados')}
+          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'confirmados' 
+              ? 'bg-white text-blue-600 shadow-sm' 
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          Confirmados
+        </button>
+        <button
+          onClick={() => setActiveTab('pendientes')}
+          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'pendientes' 
+              ? 'bg-white text-blue-600 shadow-sm' 
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          Pendientes
+        </button>
+        <button
+          onClick={() => setActiveTab('atendidos')}
+          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'atendidos' 
+              ? 'bg-white text-blue-600 shadow-sm' 
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          Atendidos
+        </button>
+        <button
+          onClick={() => setActiveTab('historial')}
+          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'historial' 
+              ? 'bg-white text-blue-600 shadow-sm' 
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          Historial
+        </button>
+      </div>
+
+      {tabTurnos.length > 0 ? (
+        tabTurnos.map(turno => {
           // 5. Usamos datos y lógica reales
           const uniqueKey = `${turno.Fecha}-${turno.Hora}-${turno.Paciente_nroPaciente}`;
           const isPast = isPastAppointment(turno.Fecha, turno.Hora);
@@ -337,19 +393,34 @@ export default function DoctorAppointments() {
                   <p className="text-gray-600 flex items-center gap-2 mt-1">
                     <FileText size={16}/> Motivo: <span className="italic">{turno.Motivo || 'No especificado'}</span>
                   </p>
+                  {activeTab === 'historial' && turno.Diagnostico && (
+                    <p className="text-gray-600 flex items-center gap-2 mt-1">
+                      <Stethoscope size={16}/> Diagnóstico: <span className="italic">{turno.Diagnostico}</span>
+                    </p>
+                  )}
                   <p className={`mt-2 text-sm font-semibold text-gray-700`}>Estado: <span className="font-bold">{turno.estado}</span></p>
                 </div>
                 <div className="flex flex-wrap items-start gap-2 mt-4 md:mt-0">
                   <button onClick={() => handleOpenModal('prescriptions', turno)} disabled={isCancelado} className="flex items-center gap-2 px-4 py-2 text-sm bg-purple-100 text-purple-700 font-semibold rounded-md hover:bg-purple-200 disabled:opacity-50">
                     <Pill size={16}/> Recetas
                   </button>
-                  <button onClick={() => handleOpenModal('Atendido', turno)} disabled={isPast || isCancelado || isAtendiendo || isFinalizado} className="p-2 bg-teal-100 text-teal-700 rounded-full hover:bg-teal-200 disabled:bg-gray-100 disabled:text-gray-400">
+                  {turno.estado === 'Confirmado' && (
+                    <button onClick={() => handleOpenModal('Anunciado', turno)} className="p-2 bg-indigo-100 text-indigo-700 rounded-full hover:bg-indigo-200" title="Anunciar Llegada">
+                        <Megaphone size={16}/>
+                    </button>
+                  )}
+                  <button onClick={() => handleOpenModal('Atendido', turno)} disabled={isPast || isCancelado || isAtendiendo || isFinalizado || turno.estado !== 'Anunciado'} className="p-2 bg-teal-100 text-teal-700 rounded-full hover:bg-teal-200 disabled:bg-gray-100 disabled:text-gray-400">
                     <Play size={16}/>
                   </button>
-                  <button onClick={() => handleOpenModal('Finalizado', turno)} disabled={isPast || isCancelado || isFinalizado} className="p-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 disabled:bg-gray-100 disabled:text-gray-400">
+                  <button onClick={() => handleOpenModal('Finalizado', turno)} disabled={isPast || isCancelado || isFinalizado || (turno.estado !== 'Anunciado' && !isAtendiendo)} className="p-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 disabled:bg-gray-100 disabled:text-gray-400">
                     <Check size={16}/>
                   </button>
-                  <button onClick={() => handleOpenModal('edit', turno)} disabled={isCancelado || isFinalizado} className="p-2 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 disabled:bg-gray-100 disabled:text-gray-400">
+                  {turno.estado === 'Anunciado' && (
+                    <button onClick={() => handleOpenModal('Ausente', turno)} className="p-2 bg-orange-100 text-orange-700 rounded-full hover:bg-orange-200" title="Marcar como Ausente">
+                        <UserX size={16}/>
+                    </button>
+                  )}
+                  <button onClick={() => handleOpenModal('edit', turno)} disabled={['Finalizado', 'Cancelado', 'Ausente'].includes(turno.estado)} className="p-2 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 disabled:bg-gray-100 disabled:text-gray-400">
                     <Edit size={16}/>
                   </button>
                   <button onClick={() => handleOpenModal('Cancelado', turno)} disabled={isPast || isCancelado || isFinalizado} className="p-2 bg-red-100 text-red-700 rounded-full hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400">
@@ -361,7 +432,7 @@ export default function DoctorAppointments() {
           );
         })
       ) : (
-        <p>No hay turnos agendados para esta especialidad.</p>
+        <p className="text-gray-500 italic">No hay turnos en la categoría <span className="font-semibold">{activeTab}</span>.</p>
       )}
 
       {/* --- MODALES --- */}
@@ -512,7 +583,7 @@ export default function DoctorAppointments() {
           )}
                   
           {/* Modales de Confirmación Simples */}
-          {['Cancelado', 'Atendido', 'Finalizado'].includes(modal || '') && (
+          {['Cancelado', 'Atendido', 'Finalizado', 'Ausente', 'Anunciado'].includes(modal || '') && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-lg p-6 w-full max-w-md text-center">
                  <h2 className="text-xl font-bold mb-2">Confirmar Acción</h2>
