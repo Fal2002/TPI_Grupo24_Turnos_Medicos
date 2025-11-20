@@ -92,7 +92,7 @@ const AdminSidebar = () => {
         className={`fixed top-0 left-0 w-64 bg-gray-900 text-white p-5
                     transform transition-transform duration-300 ease-in-out z-20
                     ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-                    md:translate-x-0 md:relative h-screen flex flex-col border-r border-gray-800 overflow-y-auto`}
+                    md:translate-x-0 md:fixed h-screen flex flex-col border-r border-gray-800 overflow-y-auto`}
       >
         <div>
           <div className="mb-8 text-center flex flex-col items-center">

@@ -17,7 +17,7 @@ def run_notification_job():
 if __name__ == '__main__':
     scheduler = BackgroundScheduler()
     
-    scheduler.add_job(run_notification_job, 'interval', minutes=2)
+    scheduler.add_job(run_notification_job, 'interval', minutes=1)
     
     # Iniciar el scheduler
     scheduler.start()
@@ -28,6 +28,6 @@ if __name__ == '__main__':
     # Mantener el hilo principal vivo
     try:
         while True:
-            time.sleep(2)
+            time.sleep(1)
     except (KeyboardInterrupt, SystemExit):
         pass
