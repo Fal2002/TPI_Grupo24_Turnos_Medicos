@@ -53,6 +53,14 @@ class PacienteService:
             )
         return paciente
 
+    def obtener_paciente_por_usuario(self, user_id: int) -> Paciente:
+        paciente = self.paciente_repo.get_by_user_id(user_id)
+        if not paciente:
+            raise RecursoNoEncontradoError(
+                f"Paciente asociado al usuario {user_id} no encontrado."
+            )
+        return paciente
+
     def actualizar_paciente(self, nro_paciente: int, data: PacienteUpdate) -> Paciente:
         paciente = self.paciente_repo.get_by_id(nro_paciente)
         if not paciente:

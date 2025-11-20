@@ -6,6 +6,7 @@ from app.backend.schemas.agenda_excepcional import (
     AgendaExcepcionalOut,
 )
 from app.backend.schemas.agenda_regular import AgendaRegularCreate, AgendaRegularOut
+from app.backend.schemas.agenda_disponible import AgendaDisponibleOut
 from app.backend.services.agenda_service import AgendaService
 from app.backend.services.agenda_repository import AgendaRepository
 from app.backend.services.medico_repository import (
@@ -16,6 +17,7 @@ from app.backend.services.exceptions import (
     ValueError as AppValueError,
 )
 from typing import List
+from datetime import date
 
 router = APIRouter(prefix="/agendas", tags=["Agendas"])
 
@@ -113,3 +115,43 @@ def eliminar_agenda_regular(
 
     except RecursoNoEncontradoError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+# ----------------------------------------------------
+# Endpoint para consultar agenda disponible (GET)
+# ----------------------------------------------------
+@router.get(
+    "/medicos/{matricula}/agenda/disponible",
+    response_model=List[AgendaDisponibleOut],
+)
+def consultar_agenda_disponible(
+    matricula: str,
+    fecha: date,
+    service: AgendaService = Depends(get_agenda_service),
+):
+    try:
+        return service.consultar_agenda_disponible(matricula, fecha)
+
+    except RecursoNoEncontradoError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+# ----------------------------------------------------
+# Endpoint para Consultar Agenda Disponible (GET)
+# ----------------------------------------------------
+@router.get(
+    "/medicos/{matricula}/agenda/disponible",
+    response_model=List[AgendaDisponibleOut],
+)
+def obtener_agenda_disponible(
+    matricula: str,
+    fecha_inicio: date,
+    fecha_fin: date,
+    service: AgendaService = Depends(get_agenda_service),
+):
+    try:
+        return service.obtener_turnos_disponibles(matricula, fecha_inicio, fecha_fin)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )

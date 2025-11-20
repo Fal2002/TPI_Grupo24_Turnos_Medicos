@@ -1,9 +1,24 @@
 // app/turnos/nuevo/page.tsx
 
-import AppointmentScheduler from '../../components/AppointmentScheduler'; // Ajusta la ruta si es necesario
+import AppointmentScheduler from '../../components/AppointmentScheduler';
+import { headers } from 'next/headers';
+import { getPacienteByUserId } from '@/services/pacientes';
 
 // Componente de Servidor para el layout
-export default function AgendarTurnoPage() {
+export default async function AgendarTurnoPage() {
+  const headersList = await headers();
+  const userId = headersList.get('x-user-id');
+  let patientId: number | null = null;
+
+  if (userId) {
+    try {
+      const paciente = await getPacienteByUserId(userId);
+      patientId = paciente.nroPaciente;
+    } catch (error) {
+      console.error("Error fetching patient:", error);
+    }
+  }
+
   return (
     <div className="p-4 sm:p-6 md:p-8">
       <header className="mb-8 max-w-4xl mx-auto">
@@ -14,7 +29,7 @@ export default function AgendarTurnoPage() {
       </header>
 
       <main className="max-w-4xl mx-auto">
-        <AppointmentScheduler />
+        <AppointmentScheduler patientId={patientId} />
       </main>
     </div>
   );
