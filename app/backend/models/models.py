@@ -212,7 +212,9 @@ class Turno(Base):
     Diagnostico = Column(Text)
     # RELACIÓN ORM PARA ACCEDER AL ESTADO COMPLETO
     estado_rel = relationship("Estado")
-
+    Paciente = relationship("Paciente")
+    Medico = relationship("Medico")
+    
     # PROPIEDAD PARA OBTENER EL NOMBRE DEL ESTADO (Texto)
     @property
     def estado(self):
