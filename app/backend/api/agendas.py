@@ -155,3 +155,34 @@ def obtener_agenda_disponible(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
+
+#obtener agenda excepcional por matricula
+@router.get(
+    "/medicos/{matricula}/agenda/excepcional", response_model=List[AgendaExcepcionalOut]
+)   
+def obtener_agendas_excepcionales(
+    matricula: str,
+    service: AgendaService = Depends(get_agenda_service),
+):
+    try:
+        return service.obtener_agendas_excepcionales(matricula)
+    except RecursoNoEncontradoError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) 
+    
+#delete agenda excepcional por matricula y composite key
+@router.delete(
+    "/medicos/{matricula}/agenda/excepcional/item",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def eliminar_agenda_excepcional(
+    matricula: str,
+    especialidad_id: int,
+    fecha_inicio: str,
+    hora_inicio: str,
+    service: AgendaService = Depends(get_agenda_service),
+):
+    try:
+        service.eliminar_agenda_excepcional(matricula, especialidad_id, fecha_inicio, hora_inicio)
+
+    except RecursoNoEncontradoError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

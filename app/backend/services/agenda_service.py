@@ -23,7 +23,7 @@ class AgendaService:
         self, medico_matricula: str, data: AgendaExcepcionalCreate
     ):
 
-        if not self.medico_repo.obtener_medico(medico_matricula):
+        if not self.medico_repo.get_by_matricula(medico_matricula):
             raise RecursoNoEncontradoError(
                 f"Médico con matrícula {medico_matricula} no encontrado."
             )
@@ -38,7 +38,7 @@ class AgendaService:
                 )
 
             # Validación de rangos
-            if data.Fecha_inicio > data.Fecha_Fin or data.Hora_inicio >= data.Hora_Fin:
+            if data.Fecha_inicio > data.Fecha_Fin or ((data.Hora_inicio >= data.Hora_Fin) and (data.Fecha_inicio == data.Fecha_Fin)):
                 raise ValueError(
                     "El rango de tiempo/fecha es inválido (inicio debe ser anterior al fin)."
                 )
@@ -73,6 +73,9 @@ class AgendaService:
         # Se asume que el Repository maneja la unicidad de las claves compuestas (Matricula, Especialidad, Dia_de_semana, Hora_inicio)
         return self.agenda_repo.create_agenda_regular(medico_matricula, data)
 
+    def obtener_agendas_excepcionales(
+        self, medico_matricula: str ) -> List[AgendaExcepcional]:
+        return self.agenda_repo.get_agendas_excepcionales_by_medico(medico_matricula)
     # ----------------------------------------------------
     # Funciones de Consulta (Usadas por el Router de Agenda)
     # ----------------------------------------------------
@@ -108,6 +111,20 @@ class AgendaService:
 
         # 2. Llamar al Repository para eliminarla
         self.agenda_repo.delete_agenda_regular(agenda_a_eliminar)
+
+    def eliminar_agenda_excepcional(
+        self, medico_matricula: str, especialidad_id: int, fecha_inicio: str, hora_inicio: str
+    ) -> None:
+        # 1. Obtener la agenda excepcional específica
+        agenda = self.agenda_repo.get_agenda_excepcional_by_pk(medico_matricula, especialidad_id, fecha_inicio, hora_inicio)
+
+        if not agenda:
+            raise RecursoNoEncontradoError(
+                f"Agenda excepcional no encontrada para médico {medico_matricula}."
+            )
+
+        # 2. Llamar al Repository para eliminarla
+        self.agenda_repo.delete_agenda_excepcional(agenda)
 
     def consultar_agenda_disponible(
         self, medico_matricula: str, fecha: date

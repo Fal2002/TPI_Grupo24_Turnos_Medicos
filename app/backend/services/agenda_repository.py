@@ -75,6 +75,15 @@ class AgendaRepository:
             .first()
         )
 
+    def get_agendas_excepcionales_by_medico(
+        self, medico_matricula: str
+    ) -> List[AgendaExcepcional]:
+        return (
+            self.db.query(AgendaExcepcional)
+            .filter(AgendaExcepcional.Medico_Matricula == medico_matricula)
+            .all()
+        )
+
     def delete_agenda_regular(self, agenda: AgendaRegular) -> None:
         self.db.delete(agenda)
         self.db.commit()
@@ -225,4 +234,22 @@ class AgendaRepository:
                 ),  # Pendiente, Confirmado, Anunciado (Ocupan lugar)
             )
             .all()
+        )
+    
+    def delete_agenda_excepcional(self, agenda: AgendaExcepcional) -> None:
+        self.db.delete(agenda)
+        self.db.commit()
+
+    def get_agenda_excepcional_by_pk(
+        self, medico_matricula: str, especialidad_id: int, fecha_inicio: str, hora_inicio: str
+    ) -> AgendaExcepcional | None:
+        return (
+            self.db.query(AgendaExcepcional)
+            .filter(
+                AgendaExcepcional.Medico_Matricula == medico_matricula,
+                AgendaExcepcional.Especialidad_Id == especialidad_id,
+                AgendaExcepcional.Fecha_inicio == fecha_inicio,
+                AgendaExcepcional.Hora_inicio == hora_inicio,
+            )
+            .first()
         )
