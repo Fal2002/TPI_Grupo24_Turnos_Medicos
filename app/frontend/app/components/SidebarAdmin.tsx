@@ -17,7 +17,7 @@ import {
   Plus,        // Icono Crear
   LayoutList,  // Icono Gestionar (antes Eye)
   ChevronDown,
-  FileText 
+  BarChart3 
 } from 'lucide-react';
 
 interface NavItem {
@@ -34,7 +34,7 @@ const navItems: NavItem[] = [
   { href: '/admin/consultorios', label: 'Consultorios', icon: DoorOpen }
 ];
 const navReports: NavItem[] = [
-  { href: '/admin/reportes', label: 'Reportes', icon: FileText }
+  { href: '/admin/reportes', label: 'Reportes', icon: BarChart3 }
 ];
 
 const LogoutButton = () => {

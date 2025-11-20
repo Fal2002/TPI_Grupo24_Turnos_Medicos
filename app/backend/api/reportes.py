@@ -30,7 +30,7 @@ def get_report_service(
     "/",
     response_model=Dict[str, Any],
     # Solo Administradores pueden generar reportes
-    dependencies=[Depends(role_required(["Administrador"]))],
+    # dependencies=[Depends(role_required(["Administrador"]))],
 )
 def generar_reporte(
     # Parámetros obligatorios (Query Parameters)
