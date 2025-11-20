@@ -57,6 +57,7 @@ class Paciente(Base):
         unique=True,
     )
     user = relationship("User", back_populates="paciente")  # Relación de uno a uno
+    turnos = relationship("Turno", back_populates="paciente") # Relación uno a muchos
 
 
 # ========================
@@ -252,6 +253,7 @@ class Turno(Base):
     Diagnostico = Column(Text)
     # RELACIÓN ORM PARA ACCEDER AL ESTADO COMPLETO
     estado_rel = relationship("Estado")
+    paciente = relationship("Paciente", back_populates="turnos")
 
     # PROPIEDAD PARA OBTENER EL NOMBRE DEL ESTADO (Texto)
     @property

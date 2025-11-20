@@ -2,12 +2,14 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 // Importamos iconos relevantes para el médico
 import { Menu, X, LogOut, CalendarDays, Users, Stethoscope, Notebook } from 'lucide-react';
 import { useSpecialty } from '../contexts/SpecialtyContext'; // Ajusta la ruta
+import { getMedicoPorUserId } from '@/services/medicos';
+import { useMedico } from '../contexts/MedicoContext';
 
 
 interface NavItem {
@@ -15,6 +17,34 @@ interface NavItem {
   label: string;
   icon: React.ComponentType<{ className?: string; size?: number }>;
 }
+interface MedicoEspecialidad {
+  descripcion: string;
+  Id_especialidad: number;
+}
+interface MedicoData {
+  Nombre: string;
+  Apellido: string;
+  Matricula: string;
+  email_usuario: string;
+  especialidades: MedicoEspecialidad[];
+}
+
+/*
+formato de medico
+{
+    "Nombre": "Marcelo",
+    "Apellido": "Tinellis QUINTuagesimo",
+    "Matricula": "AB123CD99",
+    "email_usuario": "AB123CD99@clinica.com",
+    "especialidades": [
+        {
+            "descripcion": "Kinesiología",
+            "Id_especialidad": 2
+        }
+    ]
+}
+
+*/
 
 // 1. Nuevos enlaces de navegación para el médico
 const navItems: NavItem[] = [
@@ -24,7 +54,8 @@ const navItems: NavItem[] = [
 ];
 
 // 2. Datos de ejemplo para las especialidades del médico
-const medicoEspecialidades = ['Cardiología', 'Clínica General'];
+//const medicoEspecialidades = ['Cardiología', 'Clínica General'];
+
 
 // El componente LogoutButton puede ser el mismo o importado de otro archivo
 const LogoutButton = () => {
@@ -55,14 +86,29 @@ export default function SidebarMed() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   // 3. Estado para manejar la especialidad seleccionada
-  const { activeSpecialty, setActiveSpecialty } = useSpecialty();
+const { medico, activeSpecialty, setActiveSpecialty } = useMedico();
 
-  const handleSpecialtyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    // 3. Al cambiar el select, llamamos a la función del contexto
-    setActiveSpecialty(e.target.value);
+ const handleSpecialtyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = Number(e.target.value);
+    // Buscamos el objeto completo de la especialidad para guardarlo en el contexto
+    const newSpecialty = medico?.especialidades.find(esp => esp.Id_especialidad === selectedId) || null;
+    setActiveSpecialty(newSpecialty);
   };
 
-  
+ if (!medico || !activeSpecialty) {
+    return (
+      <aside className="fixed top-0 left-0 w-64 bg-gray-900 text-white p-5 h-screen">
+        Cargando...
+      </aside>
+    );
+  }
+
+  const medicoEspecialidades = medico.especialidades.map(esp => esp.descripcion);
+
+  // Sincronizar la primera especialidad con el contexto cuando el componente se monta
+
+
+
 
   const toggleMobileMenu = () => setMobileMenuOpen(!isMobileMenuOpen);
 
@@ -77,7 +123,7 @@ export default function SidebarMed() {
       <aside className={`fixed top-0 left-0 w-64 bg-gray-900 text-white p-5 transform transition-transform duration-300 ease-in-out z-20 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:fixed h-screen flex flex-col`}>
         <div>
           <div className="mb-6 text-center">
-            <Link href="/medico/agenda" className="text-2xl font-bold text-white hover:text-gray-300">
+            <Link href="/medico" className="text-2xl font-bold text-white hover:text-gray-300">
               Panel Médico
             </Link>
           </div>
@@ -89,17 +135,18 @@ export default function SidebarMed() {
               <span>Viendo como:</span>
             </label>
             <select
-              id="specialty-selector"
-              value={activeSpecialty}
-              onChange={handleSpecialtyChange}
-              className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-blue-500 focus:border-blue-500"
-            >
-              {medicoEspecialidades.map(specialty => (
-                <option key={specialty} value={specialty}>
-                  {specialty}
-                </option>
-              ))}
-            </select>
+            id="specialty-selector"
+            // Ahora el valor es el ID de la especialidad
+            value={activeSpecialty.Id_especialidad}
+            onChange={handleSpecialtyChange}
+            className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 ..."
+          >
+            {medico.especialidades.map(specialty => (
+              <option key={specialty.Id_especialidad} value={specialty.Id_especialidad}>
+                {specialty.descripcion}
+              </option>
+            ))}
+          </select>
           </div>
           {/* --- FIN DE LA SECCIÓN MODIFICADA --- */}
 

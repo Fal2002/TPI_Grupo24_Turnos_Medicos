@@ -43,3 +43,53 @@ export async function createTurno(turno: TurnoCreate) {
   }
   return res.json();
 }
+
+export async function getTurnosPorMedico(matricula: string) {
+  const res = await fetch(`${API_URL}/turnos/turnos/medico/${matricula}`);
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.detail || "Error al obtener turnos del médico");
+  }
+  return res.json();
+}
+
+export async function getTurnosPorPaciente(nroPaciente: number) {
+  const res = await fetch(`${API_URL}/turnos/turnos/paciente/${nroPaciente}`);
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.detail || "Error al obtener turnos del paciente");
+  }
+  return res.json();
+}
+
+export async function cambiarEstadoTurno(pkData: { fecha: string; hora: string; paciente_nro: number }, accion: string) {
+  const { fecha, hora, paciente_nro } = pkData;
+  const res = await fetch(`${API_URL}/turnos/turnos/${fecha}/${hora}/${paciente_nro}/${accion}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.detail || "Error al cambiar estado del turno");
+  }
+  return res.json();
+}
+
+//actualizar turno
+export async function actualizarTurno(pkData: { fecha: string; hora: string; paciente_nro: number }, nuevosDatos: { Fecha?: string, Hora?: string, Motivo?: string, Diagnostico?: string }) {
+  const { fecha, hora, paciente_nro } = pkData;
+  const res = await fetch(`${API_URL}/turnos/turnos/${fecha}/${hora}/${paciente_nro}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: 'include',
+    body: JSON.stringify(nuevosDatos),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.detail || "Error al actualizar el turno");
+  }
+  return res.json();
+}

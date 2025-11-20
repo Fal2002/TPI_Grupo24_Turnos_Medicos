@@ -8,6 +8,9 @@ from app.backend.api.sucursales import router as sucursales_router
 from app.backend.api.agendas import router as agendas_router
 from app.backend.api.auth import router as auth_router
 from app.backend.api.reportes import router as reportes_router
+from app.backend.api.recetas import router as recetas_router
+from app.backend.api.drogas import router as drogas_router
+from app.backend.api.medicamentos import router as medicamentos_router
 
 router = APIRouter()
 
@@ -20,3 +23,6 @@ router.include_router(sucursales_router, prefix="/sucursales", tags=["Sucursales
 router.include_router(agendas_router, prefix="/agendas", tags=["Agendas"])
 router.include_router(auth_router, prefix="/auth", tags=["Autenticacion"])
 router.include_router(reportes_router, prefix="/reportes", tags=["Reportes"])
+router.include_router(recetas_router, prefix="/recetas", tags=["Recetas"])
+router.include_router(drogas_router, prefix="/drogas", tags=["Drogas"])
+router.include_router(medicamentos_router, prefix="/medicamentos", tags=["Medicamentos"])

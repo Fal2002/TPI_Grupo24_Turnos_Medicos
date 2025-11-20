@@ -28,7 +28,17 @@ class TurnoOut(BaseModel):
     medico_matricula: str = Field(alias="Medico_Matricula")
     especialidad_id: int = Field(alias="Especialidad_Id")
     estado: str | None = Field(default=None)   # <-- se usa la propiedad @property "estado"
+    motivo: str | None = Field(default=None, alias="Motivo")
+    diagnostico: str | None = Field(default=None, alias="Diagnostico")
 
     class Config:
         from_attributes = True
         populate_by_name = True
+
+class TurnoUpdate(BaseModel):
+    fecha: date | None = Field(default=None, alias="Fecha")
+    hora: str | None = Field(default=None, alias="Hora")
+    motivo: str | None = Field(default=None, alias="Motivo")
+    diagnostico: str | None = Field(default=None, alias="Diagnostico")
+
+    model_config = ConfigDict(populate_by_name=True)

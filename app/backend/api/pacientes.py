@@ -74,6 +74,19 @@ def obtener_paciente_endpoint(
         # Falla de recurso no encontrado (404)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
+#get paciente by medico
+@router.get("/medico/{medico_matricula}", response_model=List[PacienteOut])
+def obtener_pacientes_por_medico_endpoint(
+    medico_matricula: str, 
+    especialidad_id: Optional[int] = None,
+    service: PacienteService = Depends(get_paciente_service)
+):
+    try:
+        return service.obtener_paciente_por_medico(medico_matricula, especialidad_id)
+
+    except RecursoNoEncontradoError as e:
+        # Falla de recurso no encontrado (404)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 # Endpoint 4: Elminar turno
 @router.delete("/{nro_paciente}")

@@ -35,7 +35,7 @@ export async function getMedico(matricula: number | string) {
   if (!res.ok) throw new Error("Médico no encontrado");
   return res.json();
 }
-
+/*
 export async function getMedicoPorUserId() {
   const headersList = headers();
   const userId = (await headersList).get('x-user-id');
@@ -44,6 +44,34 @@ export async function getMedicoPorUserId() {
   return res.json();
 }
 
+*/
+
+export const getMedicoPorUserId = async (userId: string) => {
+  // Ya no leemos las cabeceras aquí
+  // const headersList = headers();
+  // const userId = headersList.get('x-user-id');
+
+  if (!userId) {
+    throw new Error("User ID no fue proporcionado para obtener datos del médico.");
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/medicos/user/${userId}`, {
+      // Opciones de caché si es necesario, por ejemplo:
+      cache: 'no-store', 
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error al obtener los datos del médico: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Fallo en getMedicoPorUserId:", error);
+    return null; // Devuelve null o maneja el error como prefieras
+  }
+};
 
 export async function createMedico(data: any) {
   const res = await fetch(`${API_URL}/medicos`, {

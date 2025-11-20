@@ -5,6 +5,7 @@ class PendienteState(EstadoTurno):
     def cancelar(self): self.set_estado("Cancelado")
     def reprogramar(self): self.set_estado("Pendiente")
     def anunciar(self): self.set_estado("Anunciado")
+    def atender(self): self.set_estado("Atendido")
 
 class ConfirmadoState(EstadoTurno):
     def cancelar(self): self.set_estado("Cancelado")

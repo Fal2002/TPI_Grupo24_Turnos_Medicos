@@ -37,14 +37,19 @@ export async function getPacienteByNumero(numero: string | number) {
   return await res.json();
 }
 
-export async function getPacienteByUserId(userId: string | number) {
-  const res = await fetch(`${API_URL}/user/${userId}`, {
+//export paciente por medico
+export async function getPacientesPorMedico(medico_matricula: string, especialidad_id?: number) {
+  let url = `${API_URL}/medico/${medico_matricula}`;
+  if (especialidad_id) {
+      url += `?especialidad_id=${especialidad_id}`;
+  }
+  const res = await fetch(url, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
 
   if (!res.ok) {
-    throw new Error('Error al obtener el paciente por usuario');
+    throw new Error('Error al obtener los pacientes del médico');
   }
 
   return await res.json();
