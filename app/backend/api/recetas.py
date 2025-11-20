@@ -1,22 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.backend.db.db import get_db
-<<<<<<< HEAD
 from app.backend.schemas.receta import (
     RecetaCreate,
     RecetaOut,
     RecetaConMedicamentosOut,
     MedicamentoOut,
 )
+from app.backend.services.receta_service import get_receta_by_id, get_recetas
 from app.backend.services.recetas_service import RecetaService
 from app.backend.services.recetas_repository import RecetaRepository
 from app.backend.services.exceptions import RecursoNoEncontradoError
 from app.backend.core.dependencies import role_required
-=======
-from app.backend.schemas.receta import RecetaOut, RecetaCreate
-from app.backend.services.receta_service import crear_receta, get_recetas, get_receta_by_id, eliminar_receta
->>>>>>> cambios-en-backend
 from typing import List
+
 
 router = APIRouter(prefix="/recetas", tags=["Recetas"])
 
@@ -28,7 +25,6 @@ def listar_recetas(db: Session = Depends(get_db)):
 def obtener_receta(receta_id: int, db: Session = Depends(get_db)):
     return get_receta_by_id(db, receta_id)
 
-<<<<<<< HEAD
 def get_receta_service(db: Session = Depends(get_db)) -> RecetaService:
     return RecetaService(receta_repo=RecetaRepository(db), db_session=db)
 
@@ -40,7 +36,7 @@ def get_receta_service(db: Session = Depends(get_db)) -> RecetaService:
     "/",
     response_model=RecetaOut,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(role_required(["Administrador", "Médico"]))],
+    dependencies=[Depends(role_required(["Administrador", "Médico", "Medico"]))],
 )
 def crear_receta(
     payload: RecetaCreate, service: RecetaService = Depends(get_receta_service)
@@ -116,7 +112,7 @@ def eliminar_receta(
 @router.post(
     "/{receta_id}/medicamentos/{medicamento_id}",
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(role_required(["Administrador", "Médico"]))],
+    dependencies=[Depends(role_required(["Administrador", "Médico", "Medico"]))],
 )
 def agregar_medicamento_a_receta(
     receta_id: int,
@@ -143,13 +139,3 @@ def obtener_medicamentos_de_receta(
         return service.obtener_medicamentos_de_receta(receta_id)
     except RecursoNoEncontradoError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-=======
-@router.post("/", response_model=RecetaOut)
-def crear(data: RecetaCreate, db: Session = Depends(get_db)):
-    return crear_receta(db, data)
-
-@router.delete("/{receta_id}")
-def eliminar(receta_id: int, db: Session = Depends(get_db)):
-    eliminar_receta(db, receta_id)
-    return {"mensaje": "Receta eliminada"}
->>>>>>> cambios-en-backend

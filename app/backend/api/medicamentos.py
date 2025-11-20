@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.backend.db.db import get_db
-<<<<<<< HEAD
 from app.backend.schemas.medicamento import MedicamentoCreate, MedicamentoOut
 from app.backend.services.medicamento_service import MedicamentoService
 from app.backend.services.medicamento_repository import MedicamentoRepository
@@ -20,7 +19,7 @@ def get_medicamento_service(db: Session = Depends(get_db)) -> MedicamentoService
     "/",
     response_model=MedicamentoOut,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(role_required(["Administrador", "Médico"]))],
+    dependencies=[Depends(role_required(["Administrador", "Médico", "Medico"]))],
 )
 def crear_medicamento(
     payload: MedicamentoCreate,
@@ -58,23 +57,3 @@ def eliminar_medicamento(
         service.eliminar_medicamento(id)
     except RecursoNoEncontradoError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-=======
-from app.backend.services.medicamento_service import (
-    get_medicamentos, get_medicamento_by_id, create_medicamento
-)
-from app.backend.schemas.medicamento import MedicamentoCreate, MedicamentoOut
-
-router = APIRouter(prefix="/medicamentos", tags=["Medicamentos"])
-
-@router.get("/", response_model=list[MedicamentoOut])
-def listar(db: Session = Depends(get_db)):
-    return get_medicamentos(db)
-
-@router.get("/{id}", response_model=MedicamentoOut)
-def obtener(id: int, db: Session = Depends(get_db)):
-    return get_medicamento_by_id(db, id)
-
-@router.post("/", response_model=MedicamentoOut)
-def crear(data: MedicamentoCreate, db: Session = Depends(get_db)):
-    return create_medicamento(db, data)
->>>>>>> cambios-en-backend

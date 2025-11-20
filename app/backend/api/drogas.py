@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.backend.db.db import get_db
-<<<<<<< HEAD
 from app.backend.schemas.droga import DrogaCreate, DrogaOut
 from app.backend.services.droga_service import DrogaService
 from app.backend.services.droga_repository import DrogaRepository
@@ -51,23 +50,3 @@ def eliminar_droga(id: int, service: DrogaService = Depends(get_droga_service)):
         service.eliminar_droga(id)
     except RecursoNoEncontradoError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-=======
-from app.backend.services.droga_service import (
-    get_drogas, get_droga_by_id, create_droga
-)
-from app.backend.schemas.droga import DrogaCreate, DrogaOut
-
-router = APIRouter(prefix="/drogas", tags=["Drogas"])
-
-@router.get("/", response_model=list[DrogaOut])
-def listar(db: Session = Depends(get_db)):
-    return get_drogas(db)
-
-@router.get("/{id}", response_model=DrogaOut)
-def obtener(id: int, db: Session = Depends(get_db)):
-    return get_droga_by_id(db, id)
-
-@router.post("/", response_model=DrogaOut)
-def crear(data: DrogaCreate, db: Session = Depends(get_db)):
-    return create_droga(db, data)
->>>>>>> cambios-en-backend

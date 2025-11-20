@@ -4,7 +4,6 @@ from fastapi import HTTPException
 from app.backend.models.models import Consultorio
 from app.backend.schemas.consultorio import ConsultorioCreate
 
-<<<<<<< HEAD
 
 def crear_consultorio(db: Session, payload):
     consultorio = Consultorio(Numero=payload.Numero, Sucursal_Id=payload.Sucursal_Id)
@@ -40,17 +39,6 @@ def obtener_consultorio(db: Session, numero: int, sucursal_id: int):
         .filter(Consultorio.Numero == numero, Consultorio.Sucursal_Id == sucursal_id)
         .first()
     )
-=======
-def get_consultorios(db: Session):
-    return db.query(Consultorio).all()
-
-
-def get_consultorio(db: Session, numero: int, sucursal_id: int):
-    cons = db.query(Consultorio).filter(
-        Consultorio.Numero == numero,
-        Consultorio.Sucursal_Id == sucursal_id
-    ).first()
->>>>>>> cambios-en-backend
 
     if not cons:
         raise HTTPException(404, "Consultorio no encontrado")

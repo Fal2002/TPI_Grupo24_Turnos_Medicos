@@ -1,15 +1,7 @@
-<<<<<<< HEAD
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
-=======
-from pydantic import BaseModel
-from typing import List
-from datetime import date
-from app.backend.schemas.detalle_receta import DetalleRecetaOut
->>>>>>> cambios-en-backend
 
 
-<<<<<<< HEAD
 # ============================
 # MEDICAMENTO
 # ============================
@@ -57,14 +49,3 @@ class RecetaOut(BaseModel):
 
 class RecetaConMedicamentosOut(RecetaOut):
     medicamentos: List[MedicamentoOut] = Field(default_factory=list)
-=======
-class RecetaCreate(RecetaBase):
-    Detalles_Ids: List[int] = []
-
-class RecetaOut(RecetaBase):
-    Id: int
-    detalles: List[DetalleRecetaOut] = []
-
-    class Config:
-        from_attributes = True
->>>>>>> cambios-en-backend

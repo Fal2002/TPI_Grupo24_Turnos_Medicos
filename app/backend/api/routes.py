@@ -11,7 +11,6 @@ from app.backend.api.auth import router as auth_router
 from app.backend.api.reportes import router as reportes_router
 from app.backend.api.recetas import router as recetas_router
 from app.backend.api.drogas import router as drogas_router
-<<<<<<< HEAD
 from app.backend.api.medicamentos import router as medicamentos_router
 
 router = APIRouter()
@@ -34,18 +33,3 @@ router.include_router(drogas_router, prefix="/drogas", tags=["Drogas"])
 router.include_router(
     medicamentos_router, prefix="/medicamentos", tags=["Medicamentos"]
 )
-=======
-
-router = APIRouter()
-
-router.include_router(pacientes_router)
-router.include_router(medicos_router)
-router.include_router(especialidades_router)
-router.include_router(consultorios_router)
-router.include_router(turnos_router)
-router.include_router(sucursales_router)
-router.include_router(recetas_router)
-router.include_router(detalles_receta_router)
-router.include_router(medicamentos_router)
-router.include_router(drogas_router)
->>>>>>> cambios-en-backend

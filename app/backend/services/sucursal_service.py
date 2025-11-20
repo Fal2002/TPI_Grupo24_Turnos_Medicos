@@ -4,7 +4,6 @@ from fastapi import HTTPException
 from app.backend.models.models import Sucursal
 from app.backend.schemas.sucursal import SucursalCreate
 
-<<<<<<< HEAD
 
 # Crear sucursal
 def crear_sucursal(db: Session, data: SucursalCreate):
@@ -30,10 +29,6 @@ def listar_sucursales(
     if direccion:
         query = query.filter(Sucursal.Direccion.ilike(f"%{direccion}%"))
     return query.all()
-=======
-def get_sucursales(db: Session):
-    return db.query(Sucursal).all()
->>>>>>> cambios-en-backend
 
 
 def get_sucursal_by_id(db: Session, id: int):

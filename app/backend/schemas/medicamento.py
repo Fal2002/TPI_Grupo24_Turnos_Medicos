@@ -1,6 +1,6 @@
 from pydantic import BaseModel
+from typing import Optional
 
-<<<<<<< HEAD
 
 # --- Dosis ---
 class DosisCreate(BaseModel):
@@ -16,9 +16,6 @@ class DosisUpdate(BaseModel):
 
 
 # --- Medicamento ---
-=======
-
->>>>>>> cambios-en-backend
 class MedicamentoBase(BaseModel):
     Nombre: str
     Cantidad: float
@@ -31,7 +28,6 @@ class MedicamentoBase(BaseModel):
 class MedicamentoCreate(MedicamentoBase):
     pass
 
-<<<<<<< HEAD
 
 class MedicamentoUpdate(BaseModel):
     Nombre: Optional[str] = None
@@ -41,14 +37,9 @@ class MedicamentoUpdate(BaseModel):
 
 # --- Salida ---
 class DrogaNested(BaseModel):
-=======
-
-class MedicamentoOut(MedicamentoBase):
->>>>>>> cambios-en-backend
     Id: int
 
     class Config:
-<<<<<<< HEAD
         from_attributes = True
 
 
@@ -79,6 +70,3 @@ class MedicamentoOut(BaseModel):
 
     class Config:
         from_attributes = True
-=======
-        from_attributes = True
->>>>>>> cambios-en-backend

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from sqlalchemy import (
     Column,
     ForeignKeyConstraint,
@@ -8,9 +7,6 @@ from sqlalchemy import (
     ForeignKey,
     Float,
 )
-=======
-from sqlalchemy import Column, ForeignKeyConstraint, Integer, Text, String, ForeignKey, Float, Date
->>>>>>> cambios-en-backend
 from app.backend.db.db import Base
 from app.backend.state.estados_turno import (
     PendienteState,
@@ -40,15 +36,13 @@ class Consultorio(Base):
         primary_key=True,
     )
 
-    sucursal = relationship("Sucursal")
-
 
 class Paciente(Base):
     __tablename__ = "Pacientes"
     nroPaciente = Column(Integer, primary_key=True, autoincrement=True)
     Nombre = Column(Text, nullable=False)
     Apellido = Column(Text, nullable=False)
-    Teléfono = Column(Text)
+    Telefono = Column(Text)
     Email = Column(Text, unique=True)
 
     User_Id = Column(
@@ -176,7 +170,6 @@ class AgendaExcepcional(Base):
 class Turno(Base):
     __tablename__ = "Turnos"
 
-<<<<<<< HEAD
     Fecha = Column(Text, primary_key=True)
     Hora = Column(Text, primary_key=True)
 
@@ -210,26 +203,6 @@ class Turno(Base):
         Integer,
         ForeignKey("Sucursales.Id", ondelete="SET NULL", onupdate="CASCADE"),
         nullable=True,
-=======
-    Fecha = Column(Date, primary_key=True)
-    Hora = Column(Text, primary_key=True)
-    Paciente_nroPaciente = Column(Integer, ForeignKey("Pacientes.nroPaciente", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
-
-    Medico_Matricula = Column(String, ForeignKey("Medicos.Matricula", ondelete="RESTRICT", onupdate="CASCADE"), nullable=False)
-    Especialidad_Id = Column(Integer, ForeignKey("Especialidades.Id_especialidad", ondelete="RESTRICT", onupdate="CASCADE"), nullable=False)
-    Estado_Id = Column(Integer, ForeignKey("Estados.Id", ondelete="SET NULL", onupdate="CASCADE"), nullable=True)
-
-    Consultorio_Numero = Column(Integer, nullable=True)
-    Consultorio_Sucursal_Id = Column(Integer, nullable=True)
-
-    __table_args__ = (
-        ForeignKeyConstraint(
-            ["Consultorio_Numero", "Consultorio_Sucursal_Id"],
-            ["Consultorios.Numero", "Consultorios.Sucursal_Id"],
-            ondelete="SET NULL",
-            onupdate="CASCADE"
-        ),
->>>>>>> cambios-en-backend
     )
 
     Duracion = Column(Integer)
@@ -237,24 +210,9 @@ class Turno(Base):
     Diagnostico = Column(Text)
 
     estado_rel = relationship("Estado")
-<<<<<<< HEAD
     paciente = relationship("Paciente")
     medico = relationship("Medico")
     especialidad = relationship("Especialidad")
-=======
-    medico = relationship("Medico")
-    especialidad = relationship("Especialidad")
-    paciente = relationship("Paciente")
-    consultorio = relationship("Consultorio", lazy="joined")
-
-    @property
-    def sucursal(self):
-        if self.consultorio:
-            return self.consultorio.sucursal
-        return None
-
-    recetas = relationship("Receta", back_populates="turno", cascade="all, delete-orphan")
->>>>>>> cambios-en-backend
 
     # PROPIEDAD PARA OBTENER EL NOMBRE DEL ESTADO (Texto)
     @property
@@ -297,11 +255,9 @@ class Turno(Base):
 
 class Receta(Base):
     __tablename__ = "Recetas"
-
     Id = Column(Integer, primary_key=True, autoincrement=True)
     Turno_Fecha = Column(Text, nullable=False)
     Turno_Hora = Column(Text, nullable=False)
-<<<<<<< HEAD
     Turno_Paciente_nroPaciente = Column(
         Integer,
         ForeignKey(
@@ -312,59 +268,32 @@ class Receta(Base):
 
     detalles = relationship(
         "DetalleReceta", back_populates="receta", cascade="all, delete"
-=======
-    Turno_Paciente_nroPaciente = Column(Integer, nullable=False)
-
-    __table_args__ = (
-        ForeignKeyConstraint(
-            ["Turno_Fecha", "Turno_Hora", "Turno_Paciente_nroPaciente"],
-            ["Turnos.Fecha", "Turnos.Hora", "Turnos.Paciente_nroPaciente"],
-            ondelete="CASCADE",
-            onupdate="CASCADE"
-        ),
->>>>>>> cambios-en-backend
     )
 
-    turno = relationship("Turno", back_populates="recetas")
-    detalles = relationship(
-        "DetalleReceta",
-        back_populates="receta",
-        lazy="joined"
-    )
 
 class Droga(Base):
     __tablename__ = "Drogas"
     Id = Column(Integer, primary_key=True, autoincrement=True)
     Descripcion = Column(String(100), nullable=False, unique=True)
 
-    medicamentos = relationship("Medicamento", back_populates="droga")
-
 
 class Medicamento(Base):
     __tablename__ = "Medicamentos"
     Id = Column(Integer, primary_key=True, autoincrement=True)
-<<<<<<< HEAD
     Droga_Id = Column(
         Integer,
         ForeignKey("Drogas.Id", ondelete="SET NULL", onupdate="CASCADE"),
         nullable=True,
     )
-=======
->>>>>>> cambios-en-backend
     Nombre = Column(Text, nullable=False)
-    Cantidad = Column(Float, nullable=False)
-    Unidad = Column(Text, nullable=False)
-    Frecuencia = Column(Text, nullable=False)
-    Droga_Id = Column(Integer, ForeignKey("Drogas.Id", ondelete="RESTRICT"), nullable=False)
 
-    droga = relationship("Droga", back_populates="medicamentos")
+    droga = relationship("Droga")
     detalles = relationship("DetalleReceta", back_populates="medicamento")
 
 
 class DetalleReceta(Base):
     __tablename__ = "Detalles_Recetas"
 
-<<<<<<< HEAD
     Receta_Id = Column(
         Integer,
         ForeignKey("Recetas.Id", ondelete="CASCADE", onupdate="CASCADE"),
@@ -406,11 +335,3 @@ class User(Base):
     role = relationship("Role", back_populates="usuarios")
     medico = relationship("Medico", back_populates="user", uselist=False)
     paciente = relationship("Paciente", back_populates="user", uselist=False)
-=======
-    Id = Column(Integer, primary_key=True, autoincrement=True)
-    Receta_Id = Column(Integer, ForeignKey("Recetas.Id", ondelete="CASCADE"), nullable=True)  # se asocia luego
-    Medicamento_Id = Column(Integer, ForeignKey("Medicamentos.Id", ondelete="RESTRICT"), nullable=False)
-
-    receta = relationship("Receta", back_populates="detalles")
-    medicamento = relationship("Medicamento", back_populates="detalles", lazy="joined")
->>>>>>> cambios-en-backend
