@@ -20,7 +20,7 @@ class PacienteRepository:
         return self.db.query(Paciente).filter(Paciente.Email == email).first()
 
     def get_by_user_id(self, user_id: int) -> Paciente | None:
-        """Obtiene un paciente por su user_id."""
+        """Obtiene un paciente por su User_Id."""
         return self.db.query(Paciente).filter(Paciente.User_Id == user_id).first()
 
     def get_all(self) -> List[Paciente]:

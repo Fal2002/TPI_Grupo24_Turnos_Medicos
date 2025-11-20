@@ -37,7 +37,7 @@ def get_turno_service(db: Session = Depends(get_db)) -> TurnoService:
     "/",
     response_model=TurnoOut,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(role_required(["Administrador", "Paciente"]))],
+    # dependencies=[Depends(role_required(["Administrador", "Paciente"]))],
 )
 def registrar_turno(
     payload: TurnoCreate, service: TurnoService = Depends(get_turno_service)

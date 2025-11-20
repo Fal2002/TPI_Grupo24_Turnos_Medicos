@@ -47,6 +47,20 @@ def obtener_pacientes_endpoint(
 
 
 # ----------------------------------------------------
+# Endpoint: Obtener Paciente por User ID
+# ----------------------------------------------------
+@router.get("/user/{user_id}", response_model=PacienteOut)
+def obtener_paciente_por_usuario_endpoint(
+    user_id: int, service: PacienteService = Depends(get_paciente_service)
+):
+    try:
+        return service.obtener_paciente_por_usuario(user_id)
+
+    except RecursoNoEncontradoError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+# ----------------------------------------------------
 # Endpoint 3: Obtener Paciente por ID
 # ----------------------------------------------------
 @router.get("/{nro_paciente}", response_model=PacienteOut)
