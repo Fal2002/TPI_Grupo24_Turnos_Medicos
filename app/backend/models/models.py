@@ -51,22 +51,16 @@ class Paciente(Base):
         nullable=True,
         unique=True,
     )
-    user = relationship("User", back_populates="paciente")  # Relación de uno a uno
-    turnos = relationship("Turno", back_populates="paciente")  # Relación uno a muchos
+    user = relationship("User", back_populates="paciente")
+    turnos = relationship("Turno", back_populates="paciente")
 
 
-# ========================
-# Especialidades
-# ========================
 class Especialidad(Base):
     __tablename__ = "Especialidades"
     Id_especialidad = Column(Integer, primary_key=True, autoincrement=True)
     descripcion = Column(Text, nullable=False, unique=True)
 
 
-# ========================
-# Médicos
-# ========================
 class Medico(Base):
     __tablename__ = "Medicos"
     Matricula = Column(String, primary_key=True)
@@ -81,25 +75,18 @@ class Medico(Base):
     )
     user = relationship("User", back_populates="medico", uselist=False)
 
-    # 🔥 ESTA RELACIÓN FALTABA
     especialidades = relationship(
         "Especialidad",
         secondary="Medicos_Especialidades",
         backref="medicos",
         lazy="joined",
-        lazy="joined",
     )
 
     @property
     def email_usuario(self):
-        """Retorna el email del usuario asociado para la serialización."""
-        # Se asume que la relación 'user' ya fue cargada con joinedload
         return self.user.Email if self.user else None
 
 
-# ========================
-# Medicos_Especialidades
-# ========================
 class MedicoEspecialidad(Base):
     __tablename__ = "Medicos_Especialidades"
     Medico_Matricula = Column(
@@ -220,14 +207,13 @@ class Turno(Base):
 
     @property
     def estado(self):
-        if self.estado_rel:
-            return self.estado_rel.Descripcion
-        return None
+        return self.estado_rel.Descripcion if self.estado_rel else None
 
     def get_state(self, db):
         estado = db.query(Estado).filter(Estado.Id == self.Estado_Id).first()
         if not estado:
             raise Exception("Estado inválido")
+
         mapping = {
             "Pendiente": PendienteState,
             "Confirmado": ConfirmadoState,
@@ -237,9 +223,11 @@ class Turno(Base):
             "Ausente": AusenteState,
             "Anunciado": AnunciadoState,
         }
+
         cls = mapping.get(estado.Descripcion)
         if not cls:
             raise Exception(f"Estado desconocido: {estado.Descripcion}")
+
         return cls(self, db)
 
 
@@ -298,43 +286,33 @@ class DetalleReceta(Base):
         primary_key=True,
     )
 
+    # Relaciones agregadas y correctas
+    receta = relationship("Receta", back_populates="detalles")
+    medicamento = relationship("Medicamento", back_populates="detalles")
 
-# ------------------------
-# ROLES (Base para la Autorización)
-# ------------------------
+
 class Role(Base):
     __tablename__ = "Roles"
 
     Id = Column(Integer, primary_key=True, autoincrement=True)
     Nombre = Column(String, nullable=False, unique=True)
 
-    # Relación de uno a muchos: un Rol puede tener muchos Usuarios
     usuarios = relationship("User", back_populates="role")
 
 
-# ------------------------
-# USUARIOS (Base para la Autenticación)
-# ------------------------
 class User(Base):
     __tablename__ = "Users"
 
     Id = Column(Integer, primary_key=True, autoincrement=True)
     Email = Column(String, unique=True, nullable=False)
-    Password_Hash = Column(
-        String, nullable=False
-    )  # Aquí se guarda el hash de la contraseña
+    Password_Hash = Column(String, nullable=False)
 
-    # Clave Foránea al Rol
     Role_Id = Column(
         Integer,
         ForeignKey("Roles.Id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
     )
 
-    # Relación ORM
     role = relationship("Role", back_populates="usuarios")
-
-    # Relaciones de uno a uno con Médico y Paciente (Opcional)
-    # Estas se pueden usar para vincular una cuenta de usuario con una entidad específica
     medico = relationship("Medico", back_populates="user", uselist=False)
     paciente = relationship("Paciente", back_populates="user", uselist=False)
