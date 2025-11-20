@@ -5,7 +5,7 @@ import { headers } from "next/dist/server/request/headers";
 // CAMBIO IMPORTANTE: Quitamos el "/api/medicos" de la base si vamos a agregar "/medicos" abajo.
 // O dejamos solo la base.
 // Opción recomendada: Apuntar a la raíz del servidor
-const API_URL = "http://localhost:8000/api/medicos"; 
+const API_URL = "http://localhost:8000/api/medicos";
 
 interface MedicoFilters {
   matricula?: string;
@@ -24,14 +24,14 @@ export async function getMedicos(filters?: MedicoFilters) {
   }
 
   // Ahora la URL final será: http://localhost:8000/medicos?param=...
-  const res = await fetch(`${API_URL}/medicos?${params.toString()}`);
-  
+  const res = await fetch(`${API_URL}?${params.toString()}`);
+
   if (!res.ok) throw new Error("Error al obtener médicos");
   return res.json();
 }
 
 export async function getMedico(matricula: number | string) {
-  const res = await fetch(`${API_URL}/medicos/${matricula}`);
+  const res = await fetch(`${API_URL}/${matricula}`);
   if (!res.ok) throw new Error("Médico no encontrado");
   return res.json();
 }
@@ -56,9 +56,9 @@ export const getMedicoPorUserId = async (userId: string) => {
   }
 
   try {
-    const response = await fetch(`${API_URL}/medicos/user/${userId}`, {
+    const response = await fetch(`${API_URL}/user/${userId}`, {
       // Opciones de caché si es necesario, por ejemplo:
-      cache: 'no-store', 
+      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -74,7 +74,7 @@ export const getMedicoPorUserId = async (userId: string) => {
 };
 
 export async function createMedico(data: any) {
-  const res = await fetch(`${API_URL}/medicos`, {
+  const res = await fetch(`${API_URL}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
@@ -85,7 +85,7 @@ export async function createMedico(data: any) {
 }
 
 export async function updateMedico(matricula: string, data: any) {
-  const res = await fetch(`${API_URL}/medicos/${matricula}`, {
+  const res = await fetch(`${API_URL}/${matricula}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
@@ -96,7 +96,7 @@ export async function updateMedico(matricula: string, data: any) {
 }
 
 export async function deleteMedico(matricula: string) {
-  const res = await fetch(`${API_URL}/medicos/${matricula}`, {
+  const res = await fetch(`${API_URL}/${matricula}`, {
     method: "DELETE",
   });
 
@@ -105,7 +105,7 @@ export async function deleteMedico(matricula: string) {
 }
 
 export async function getEspecialidadesMedico(matricula: string) {
-  const res = await fetch(`${API_URL}/medicos/${matricula}/especialidades`);
+  const res = await fetch(`${API_URL}/${matricula}/especialidades`);
   if (!res.ok) throw new Error("Error al obtener especialidades del médico");
   return res.json();
 }

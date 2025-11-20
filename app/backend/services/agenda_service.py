@@ -4,7 +4,7 @@ from app.backend.schemas.agenda_excepcional import AgendaExcepcionalCreate
 from app.backend.schemas.agenda_regular import AgendaRegularCreate
 from app.backend.models.models import AgendaRegular, AgendaExcepcional
 from app.backend.services.exceptions import RecursoNoEncontradoError, ValueError
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import List, Optional
 from sqlalchemy.orm import Session # Aunque el Service es independiente, la inyección del repo lo requiere
 
@@ -81,3 +81,68 @@ class AgendaService:
         
         # 2. Llamar al Repository para eliminarla
         self.agenda_repo.delete_agenda_regular(agenda_a_eliminar)
+    
+    def obtener_horarios_disponibles(self, medico_matricula: str, fecha: str):
+        """
+        Obtiene los horarios disponibles para un médico en una fecha específica.
+        Retorna lista de slots disponibles con información de especialidad, duración y sucursal.
+        """
+        # 1. Validar que el médico existe
+        medico = self.medico_repo.get_by_matricula(medico_matricula)
+        if not medico:
+            raise RecursoNoEncontradoError(f"Médico con matrícula {medico_matricula} no encontrado.")
+        
+        # 2. Parsear fecha y obtener día de la semana
+        try:
+            fecha_obj = datetime.strptime(fecha, "%Y-%m-%d").date()
+        except ValueError:
+            raise ValueError("Formato de fecha inválido. Use YYYY-MM-DD")
+        
+        dia_semana = fecha_obj.isoweekday()  # 1=Lunes, 7=Domingo
+        
+        # 3. Obtener agendas regulares del médico para ese día
+        agendas_regulares = self.agenda_repo.get_agendas_regulares_by_medico(medico_matricula)
+        agendas_del_dia = [a for a in agendas_regulares if a.Dia_de_semana == dia_semana]
+        
+        if not agendas_del_dia:
+            return []  # No hay agenda configurada para ese día
+        
+        # 4. Generar slots de tiempo para cada agenda
+        slots_disponibles = []
+        
+        for agenda in agendas_del_dia:
+            # Parsear horas
+            hora_inicio = datetime.strptime(agenda.Hora_inicio, "%H:%M").time()
+            hora_fin = datetime.strptime(agenda.Hora_fin, "%H:%M").time()
+            duracion = agenda.Duracion
+            
+            # Generar slots
+            slot_actual = datetime.combine(fecha_obj, hora_inicio)
+            slot_fin = datetime.combine(fecha_obj, hora_fin)
+            
+            while slot_actual < slot_fin:
+                hora_slot = slot_actual.strftime("%H:%M")
+                
+                # Verificar disponibilidad (sin conflictos)
+                error = self.agenda_repo.verificar_disponibilidad(
+                    medico_matricula, 
+                    fecha_obj, 
+                    slot_actual.time(), 
+                    duracion
+                )
+                
+                # Si no hay error, el slot está disponible
+                if error is None:
+                    slots_disponibles.append({
+                        "fecha": fecha,
+                        "hora": hora_slot,
+                        "medico_matricula": medico_matricula,
+                        "especialidad_id": agenda.Especialidad_Id,
+                        "duracion": duracion,
+                        "sucursal_id": agenda.Sucursal_Id
+                    })
+                
+                # Avanzar al siguiente slot
+                slot_actual += timedelta(minutes=duracion)
+        
+        return slots_disponibles

@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8000/api/especialidades/especialidades";
+const API_URL = "http://localhost:8000/api/especialidades";
 
 interface EspecialidadFilters {
   nombre?: string;
@@ -7,7 +7,7 @@ interface EspecialidadFilters {
 
 export async function getEspecialidades(filters?: EspecialidadFilters) {
   const params = new URLSearchParams();
-    if (filters) {
+  if (filters) {
     if (filters.nombre) params.append("nombre", filters.nombre);
     if (filters.id) params.append("id", filters.id);
   }

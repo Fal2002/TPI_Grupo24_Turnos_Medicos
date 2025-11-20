@@ -53,25 +53,29 @@ class PacienteService:
                 f"Paciente con nro {nro_paciente} no encontrado."
             )
         return paciente
-    
-    def obtener_paciente_por_medico(self, medico_matricula: str, especialidad_id: Optional[int] = None) -> List[Paciente]:
+
+    def obtener_paciente_por_medico(
+        self, medico_matricula: str, especialidad_id: Optional[int] = None
+    ) -> List[Paciente]:
         pacientes = self.paciente_repo.get_by_medico(medico_matricula, especialidad_id)
         if not pacientes:
             # Lanza la excepción si no lo encuentra
             raise RecursoNoEncontradoError(
                 f"No se encontraron pacientes para el médico con Matrícula {medico_matricula}."
             )
-        
+
         hoy = datetime.now().date()
         ahora = datetime.now().time()
 
         for p in pacientes:
             # Filtrar turnos de este médico y especialidad
             turnos_medico = [
-                t for t in p.turnos 
-                if t.Medico_Matricula == medico_matricula and (especialidad_id is None or t.Especialidad_Id == especialidad_id)
+                t
+                for t in p.turnos
+                if t.Medico_Matricula == medico_matricula
+                and (especialidad_id is None or t.Especialidad_Id == especialidad_id)
             ]
-            
+
             # Helper para convertir fecha/hora string a objetos comparables
             def parse_turno_datetime(t):
                 try:
@@ -89,7 +93,7 @@ class PacienteService:
                 t_fecha, t_hora = parse_turno_datetime(t)
                 if not t_fecha or not t_hora:
                     continue
-                
+
                 if t_fecha < hoy or (t_fecha == hoy and t_hora < ahora):
                     visitas_pasadas.append(t)
                 else:
@@ -137,3 +141,12 @@ class PacienteService:
         self.paciente_repo.db.delete(paciente)
         self.paciente_repo.db.commit()
         return True
+
+    def obtener_paciente_por_user_id(self, user_id: int) -> Paciente:
+        paciente = self.paciente_repo.get_by_user_id(user_id)
+        if not paciente:
+            # Lanza la excepción si no lo encuentra
+            raise RecursoNoEncontradoError(
+                f"Paciente con User_Id {user_id} no encontrado."
+            )
+        return paciente

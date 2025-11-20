@@ -19,19 +19,29 @@ class PacienteRepository:
         """Obtiene un paciente por su email (para verificar unicidad)."""
         return self.db.query(Paciente).filter(Paciente.Email == email).first()
 
+    def get_by_user_id(self, user_id: int) -> Paciente | None:
+        """Obtiene un paciente por su user_id."""
+        return self.db.query(Paciente).filter(Paciente.User_Id == user_id).first()
+
     def get_all(self) -> List[Paciente]:
         """Obtiene todos los pacientes."""
         return self.db.query(Paciente).all()
-    
-    def get_by_medico(self, medico_matricula: str, especialidad_id: int = None) -> List[Paciente]:
+
+    def get_by_medico(
+        self, medico_matricula: str, especialidad_id: int = None
+    ) -> List[Paciente]:
         """Obtiene todos los pacientes asociados a un médico específico, opcionalmente filtrando por especialidad."""
         query = self.db.query(Paciente)
-        
+
         if especialidad_id:
-             query = query.filter(Paciente.turnos.any(Medico_Matricula=medico_matricula, Especialidad_Id=especialidad_id))
+            query = query.filter(
+                Paciente.turnos.any(
+                    Medico_Matricula=medico_matricula, Especialidad_Id=especialidad_id
+                )
+            )
         else:
-             query = query.filter(Paciente.turnos.any(Medico_Matricula=medico_matricula))
-             
+            query = query.filter(Paciente.turnos.any(Medico_Matricula=medico_matricula))
+
         return query.all()
 
     def get_by_filters(

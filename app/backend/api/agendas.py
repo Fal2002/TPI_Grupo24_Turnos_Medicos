@@ -113,3 +113,33 @@ def eliminar_agenda_regular(
 
     except RecursoNoEncontradoError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+# ----------------------------------------------------
+# Endpoint para Obtener Horarios Disponibles (GET)
+# ----------------------------------------------------
+@router.get("/medicos/{matricula}/agenda/disponible")
+def obtener_horarios_disponibles(
+    matricula: str,
+    fecha: str,
+    service: AgendaService = Depends(get_agenda_service),
+):
+    """
+    Obtiene los horarios disponibles para un médico en una fecha específica.
+    
+    Args:
+        matricula: Matrícula del médico
+        fecha: Fecha en formato YYYY-MM-DD
+        
+    Returns:
+        Lista de slots disponibles con información de especialidad, duración y sucursal
+    """
+    try:
+        return service.obtener_horarios_disponibles(matricula, fecha)
+        
+    except RecursoNoEncontradoError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    
+    except AppValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+

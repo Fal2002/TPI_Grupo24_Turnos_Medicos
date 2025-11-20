@@ -6,6 +6,31 @@ interface PacienteFilters {
   apellido?: string;
 }
 
+export const getPacientePorUserId = async (userId: number) => {
+  // Ya no leemos las cabeceras aquí
+  // const headersList = headers();
+  // const userId = headersList.get('x-user-id');
+
+  if (!userId) {
+    throw new Error("User ID no fue proporcionado para obtener datos del médico.");
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/user/${userId}`, {
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error al obtener los datos del paciente: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Fallo en getPacientePorUserId:", error);
+    return null; // Devuelve null o maneja el error como prefieras
+  }
+};
+
 export async function getPacientes(filters?: PacienteFilters) {
   const params = new URLSearchParams();
     if (filters) {

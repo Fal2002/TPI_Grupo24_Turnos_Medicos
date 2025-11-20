@@ -5,8 +5,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { usePaciente } from '../contexts/PacienteConetxt';
 // 1. Importar el nuevo icono
-import { Home, PanelTop, Settings, Menu, X, LogOut, CalendarPlus, Calendar1 } from 'lucide-react';
+import { Home, PanelTop, Settings, Menu, X, LogOut, CalendarPlus, Calendar1, User } from 'lucide-react';
 
 interface NavItem {
   href: string;
@@ -47,6 +48,7 @@ const LogoutButton = () => {
 const Sidebar = () => {
   const pathname = usePathname();
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { paciente } = usePaciente();
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!isMobileMenuOpen);
@@ -82,6 +84,13 @@ const Sidebar = () => {
               Mi Logo
             </Link>
           </div>
+          
+        <div className="mb-4 p-4 bg-gray-800 rounded-lg text-white">
+          <div className="flex items-center mb-2">
+            <User size={20} className="mr-2 text-blue-400" />
+            <span className="font-semibold">{paciente?.Nombre} {paciente?.Apellido}</span>
+          </div>
+        </div>
 
           {/* --- INICIO DE LA SECCIÓN AÑADIDA --- */}
           <div className="mb-6"> {/* Margen inferior para separar del menú */}

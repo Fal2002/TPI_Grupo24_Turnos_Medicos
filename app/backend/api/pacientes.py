@@ -60,12 +60,13 @@ def obtener_paciente_endpoint(
         # Falla de recurso no encontrado (404)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
-#get paciente by medico
+
+# get paciente by medico
 @router.get("/medico/{medico_matricula}", response_model=List[PacienteOut])
 def obtener_pacientes_por_medico_endpoint(
-    medico_matricula: str, 
+    medico_matricula: str,
     especialidad_id: Optional[int] = None,
-    service: PacienteService = Depends(get_paciente_service)
+    service: PacienteService = Depends(get_paciente_service),
 ):
     try:
         return service.obtener_paciente_por_medico(medico_matricula, especialidad_id)
@@ -73,6 +74,7 @@ def obtener_pacientes_por_medico_endpoint(
     except RecursoNoEncontradoError as e:
         # Falla de recurso no encontrado (404)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
 
 # Endpoint 4: Elminar turno
 @router.delete("/{nro_paciente}")
@@ -109,3 +111,13 @@ def actualizar_paciente_endpoint(
     except EmailYaRegistradoError as e:
         # Falla de Lógica de Negocio (Email duplicado)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+
+@router.get("/user/{user_id}", response_model=PacienteOut)
+def obtener_paciente_por_user_id_endpoint(
+    user_id: int, service: PacienteService = Depends(get_paciente_service)
+):
+    paciente = service.obtener_paciente_por_user_id(user_id)
+    if not paciente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    return paciente
