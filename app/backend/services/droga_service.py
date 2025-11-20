@@ -5,6 +5,7 @@ from app.backend.services.exceptions import RecursoNoEncontradoError
 from sqlalchemy.orm import Session
 from typing import List
 
+
 class DrogaService:
     def __init__(self, droga_repo: DrogaRepository, db_session: Session):
         self.droga_repo = droga_repo

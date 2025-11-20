@@ -1,16 +1,19 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel
+
 
 class DrogaBase(BaseModel):
-    descripcion: str = Field(alias="Descripcion")
+    Descripcion: str
 
-    model_config = ConfigDict(populate_by_name=True)
 
 class DrogaCreate(DrogaBase):
     pass
 
-class DrogaOut(DrogaBase):
-    id: int = Field(alias="Id")
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+class DrogaUpdate(BaseModel):
+    Descripcion: str | None = None
+
+
+class DrogaOut(DrogaBase):
+    Id: int
+
+    model_config = {"from_attributes": True}

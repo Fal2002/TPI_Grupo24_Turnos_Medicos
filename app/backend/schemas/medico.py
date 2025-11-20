@@ -17,7 +17,6 @@ class MedicoCreate(MedicoBase):
     especialidades: List[int] = []
 
 
-# Actualizamos esto:
 class MedicoUpdate(BaseModel):
     Nombre: Optional[str] = None
     Apellido: Optional[str] = None

@@ -51,7 +51,7 @@ def actualizar_especialidad(
 def eliminar_especialidad(db: Session, especialidad_id: int):
     esp = obtener_especialidad(db, especialidad_id)
     if not esp:
-        return None
+        return False
 
     db.delete(esp)
     db.commit()

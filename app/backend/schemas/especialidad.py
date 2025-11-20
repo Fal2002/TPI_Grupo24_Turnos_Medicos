@@ -13,4 +13,4 @@ class EspecialidadOut(EspecialidadBase):
     Id_especialidad: int
 
     class Config:
-        from_attributes = True  # reemplaza orm_mode
+        from_attributes = True

@@ -1,5 +1,12 @@
-from sqlalchemy import Column, ForeignKeyConstraint, Integer, Text, String, ForeignKey
-from app.backend.db import db
+from sqlalchemy import (
+    Column,
+    ForeignKeyConstraint,
+    Integer,
+    Text,
+    String,
+    ForeignKey,
+    Float,
+)
 from app.backend.db.db import Base
 from app.backend.state.estados_turno import (
     PendienteState,
@@ -13,23 +20,15 @@ from app.backend.state.estados_turno import (
 from sqlalchemy.orm import relationship
 
 
-# ========================
-# Sucursales
-# ========================
 class Sucursal(Base):
     __tablename__ = "Sucursales"
-
     Id = Column(Integer, primary_key=True, autoincrement=True)
     Direccion = Column(Text)
     Nombre = Column(Text, nullable=False)
 
 
-# ========================
-# Consultorios
-# ========================
 class Consultorio(Base):
     __tablename__ = "Consultorios"
-
     Numero = Column(Integer, primary_key=True)
     Sucursal_Id = Column(
         Integer,
@@ -38,12 +37,8 @@ class Consultorio(Base):
     )
 
 
-# ========================
-# Pacientes
-# ========================
 class Paciente(Base):
     __tablename__ = "Pacientes"
-
     nroPaciente = Column(Integer, primary_key=True, autoincrement=True)
     Nombre = Column(Text, nullable=False)
     Apellido = Column(Text, nullable=False)
@@ -57,7 +52,7 @@ class Paciente(Base):
         unique=True,
     )
     user = relationship("User", back_populates="paciente")  # Relación de uno a uno
-    turnos = relationship("Turno", back_populates="paciente") # Relación uno a muchos
+    turnos = relationship("Turno", back_populates="paciente")  # Relación uno a muchos
 
 
 # ========================
@@ -65,7 +60,6 @@ class Paciente(Base):
 # ========================
 class Especialidad(Base):
     __tablename__ = "Especialidades"
-
     Id_especialidad = Column(Integer, primary_key=True, autoincrement=True)
     descripcion = Column(Text, nullable=False, unique=True)
 
@@ -75,7 +69,6 @@ class Especialidad(Base):
 # ========================
 class Medico(Base):
     __tablename__ = "Medicos"
-
     Matricula = Column(String, primary_key=True)
     Nombre = Column(Text, nullable=False)
     Apellido = Column(Text, nullable=False)
@@ -94,26 +87,26 @@ class Medico(Base):
         secondary="Medicos_Especialidades",
         backref="medicos",
         lazy="joined",
+        lazy="joined",
     )
-
 
     @property
     def email_usuario(self):
         """Retorna el email del usuario asociado para la serialización."""
         # Se asume que la relación 'user' ya fue cargada con joinedload
         return self.user.Email if self.user else None
+
+
 # ========================
 # Medicos_Especialidades
 # ========================
 class MedicoEspecialidad(Base):
     __tablename__ = "Medicos_Especialidades"
-
     Medico_Matricula = Column(
         String,
         ForeignKey("Medicos.Matricula", ondelete="CASCADE", onupdate="CASCADE"),
         primary_key=True,
     )
-
     Especialidad_Id = Column(
         Integer,
         ForeignKey(
@@ -123,28 +116,19 @@ class MedicoEspecialidad(Base):
     )
 
 
-# ========================
-# Estados
-# ========================
 class Estado(Base):
     __tablename__ = "Estados"
-
     Id = Column(Integer, primary_key=True, autoincrement=True)
     Descripcion = Column(Text, nullable=False, unique=True)
 
 
-# ========================
-# Agendas Regulares
-# ========================
 class AgendaRegular(Base):
     __tablename__ = "Agendas_Regulares"
-
     Medico_Matricula = Column(
         String,
         ForeignKey("Medicos.Matricula", ondelete="CASCADE", onupdate="CASCADE"),
         primary_key=True,
     )
-
     Especialidad_Id = Column(
         Integer,
         ForeignKey(
@@ -152,13 +136,10 @@ class AgendaRegular(Base):
         ),
         primary_key=True,
     )
-
     Dia_de_semana = Column(Integer, primary_key=True)
     Hora_inicio = Column(Text, primary_key=True)
-
     Hora_fin = Column(Text, nullable=False)
     Duracion = Column(Integer)
-
     Sucursal_Id = Column(
         Integer,
         ForeignKey("Sucursales.Id", ondelete="SET NULL", onupdate="CASCADE"),
@@ -166,18 +147,13 @@ class AgendaRegular(Base):
     )
 
 
-# ========================
-# Agendas Excepcionales
-# ========================
 class AgendaExcepcional(Base):
     __tablename__ = "Agendas_Excepcionales"
-
     Medico_Matricula = Column(
         String,
         ForeignKey("Medicos.Matricula", ondelete="CASCADE", onupdate="CASCADE"),
         primary_key=True,
     )
-
     Especialidad_Id = Column(
         Integer,
         ForeignKey(
@@ -185,15 +161,12 @@ class AgendaExcepcional(Base):
         ),
         primary_key=True,
     )
-
     Fecha_inicio = Column(Text, primary_key=True)
     Hora_inicio = Column(Text, primary_key=True)
-
     Fecha_Fin = Column(Text)
     Hora_Fin = Column(Text)
     Es_Disponible = Column(Integer, default=1)
     Motivo = Column(Text)
-
     Consultorio_Numero = Column(Integer)
     Consultorio_Sucursal_Id = Column(Integer)
 
@@ -207,27 +180,20 @@ class AgendaExcepcional(Base):
     )
 
 
-# ========================
-# Turnos
-# ========================
 class Turno(Base):
     __tablename__ = "Turnos"
-
     Fecha = Column(Text, primary_key=True)
     Hora = Column(Text, primary_key=True)
-
     Paciente_nroPaciente = Column(
         Integer,
         ForeignKey("Pacientes.nroPaciente", ondelete="CASCADE", onupdate="CASCADE"),
         primary_key=True,
     )
-
     Medico_Matricula = Column(
         String,
         ForeignKey("Medicos.Matricula", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
     )
-
     Especialidad_Id = Column(
         Integer,
         ForeignKey(
@@ -235,39 +201,33 @@ class Turno(Base):
         ),
         nullable=False,
     )
-
     Estado_Id = Column(
         Integer,
         ForeignKey("Estados.Id", ondelete="SET NULL", onupdate="CASCADE"),
         nullable=True,
     )
-
     Sucursal_Id = Column(
         Integer,
         ForeignKey("Sucursales.Id", ondelete="SET NULL", onupdate="CASCADE"),
         nullable=True,
     )
-
     Duracion = Column(Integer)
     Motivo = Column(Text)
     Diagnostico = Column(Text)
-    # RELACIÓN ORM PARA ACCEDER AL ESTADO COMPLETO
+
     estado_rel = relationship("Estado")
     paciente = relationship("Paciente", back_populates="turnos")
 
-    # PROPIEDAD PARA OBTENER EL NOMBRE DEL ESTADO (Texto)
     @property
     def estado(self):
         if self.estado_rel:
             return self.estado_rel.Descripcion
         return None
 
-    # MÉTODO PARA OBTENER LA INSTANCIA DEL ESTADO
     def get_state(self, db):
         estado = db.query(Estado).filter(Estado.Id == self.Estado_Id).first()
         if not estado:
             raise Exception("Estado inválido")
-
         mapping = {
             "Pendiente": PendienteState,
             "Confirmado": ConfirmadoState,
@@ -277,22 +237,15 @@ class Turno(Base):
             "Ausente": AusenteState,
             "Anunciado": AnunciadoState,
         }
-
         cls = mapping.get(estado.Descripcion)
         if not cls:
             raise Exception(f"Estado desconocido: {estado.Descripcion}")
-
         return cls(self, db)
 
 
-# ========================
-# Recetas
-# ========================
 class Receta(Base):
     __tablename__ = "Recetas"
-
     Id = Column(Integer, primary_key=True, autoincrement=True)
-
     Turno_Fecha = Column(Text, nullable=False)
     Turno_Hora = Column(Text, nullable=False)
     Turno_Paciente_nroPaciente = Column(
@@ -303,38 +256,34 @@ class Receta(Base):
         nullable=False,
     )
 
+    detalles = relationship(
+        "DetalleReceta", back_populates="receta", cascade="all, delete"
+    )
 
-# ========================
-# Drogas
-# ========================
+
 class Droga(Base):
     __tablename__ = "Drogas"
-
     Id = Column(Integer, primary_key=True, autoincrement=True)
-    Descripcion = Column(Text, nullable=False, unique=True)
+    Descripcion = Column(String(100), nullable=False, unique=True)
 
 
-# ========================
-# Medicamentos
-# ========================
 class Medicamento(Base):
     __tablename__ = "Medicamentos"
-
     Id = Column(Integer, primary_key=True, autoincrement=True)
-
     Droga_Id = Column(
         Integer,
         ForeignKey("Drogas.Id", ondelete="SET NULL", onupdate="CASCADE"),
         nullable=True,
     )
-
     Nombre = Column(Text, nullable=False)
-    dosis = Column(Text)
+    dosis_cantidad = Column(Float, nullable=True)
+    dosis_unidad = Column(Text, nullable=True)
+    dosis_frecuencia = Column(Text, nullable=True)
+
+    droga = relationship("Droga")
+    detalles = relationship("DetalleReceta", back_populates="medicamento")
 
 
-# ========================
-# Detalles de Recetas
-# ========================
 class DetalleReceta(Base):
     __tablename__ = "Detalles_Recetas"
 
@@ -343,7 +292,6 @@ class DetalleReceta(Base):
         ForeignKey("Recetas.Id", ondelete="CASCADE", onupdate="CASCADE"),
         primary_key=True,
     )
-
     Medicamento_Id = Column(
         Integer,
         ForeignKey("Medicamentos.Id", ondelete="RESTRICT", onupdate="CASCADE"),

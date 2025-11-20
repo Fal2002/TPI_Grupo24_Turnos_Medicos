@@ -1,7 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.backend.db.db import get_db
-from app.backend.schemas.receta import RecetaCreate, RecetaOut, RecetaConMedicamentosOut, MedicamentoOut
+from app.backend.schemas.receta import (
+    RecetaCreate,
+    RecetaOut,
+    RecetaConMedicamentosOut,
+    MedicamentoOut,
+)
 from app.backend.services.recetas_service import RecetaService
 from app.backend.services.recetas_repository import RecetaRepository
 from app.backend.services.exceptions import RecursoNoEncontradoError
@@ -10,11 +15,10 @@ from typing import List
 
 router = APIRouter(prefix="/recetas", tags=["Recetas"])
 
+
 def get_receta_service(db: Session = Depends(get_db)) -> RecetaService:
-    return RecetaService(
-        receta_repo=RecetaRepository(db),
-        db_session=db
-    )
+    return RecetaService(receta_repo=RecetaRepository(db), db_session=db)
+
 
 # ----------------------------------------------------
 # Endpoint 1: Crear Receta (CREATE)
@@ -32,10 +36,11 @@ def crear_receta(
         return service.crear_receta(
             fecha=payload.turno_fecha,
             hora=payload.turno_hora,
-            paciente_nro=payload.turno_paciente_nro
+            paciente_nro=payload.turno_paciente_nro,
         )
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
 
 # ----------------------------------------------------
 # Endpoint 2: Obtener Todas las Recetas
@@ -43,6 +48,7 @@ def crear_receta(
 @router.get("/", response_model=List[RecetaOut])
 def obtener_todas_las_recetas(service: RecetaService = Depends(get_receta_service)):
     return service.obtener_recetas()
+
 
 # ----------------------------------------------------
 # Endpoint 3: Obtener Receta por ID
@@ -54,7 +60,7 @@ def obtener_receta_por_id(
     try:
         receta = service.obtener_receta_por_id(receta_id)
         medicamentos = service.obtener_medicamentos_de_receta(receta_id)
-        
+
         # Construimos la respuesta combinada
         return RecetaConMedicamentosOut(
             **receta.__dict__,
@@ -62,6 +68,7 @@ def obtener_receta_por_id(
         )
     except RecursoNoEncontradoError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
 
 # ----------------------------------------------------
 # Endpoint 4: Obtener Recetas por Turno
@@ -71,9 +78,10 @@ def obtener_recetas_por_turno(
     fecha: str,
     hora: str,
     paciente_nro: int,
-    service: RecetaService = Depends(get_receta_service)
+    service: RecetaService = Depends(get_receta_service),
 ):
     return service.obtener_recetas_por_turno(fecha, hora, paciente_nro)
+
 
 # ----------------------------------------------------
 # Endpoint 5: Eliminar Receta
@@ -88,6 +96,7 @@ def eliminar_receta(
     except RecursoNoEncontradoError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
+
 # ----------------------------------------------------
 # Endpoint 6: Agregar Medicamento a Receta
 # ----------------------------------------------------
@@ -99,7 +108,7 @@ def eliminar_receta(
 def agregar_medicamento_a_receta(
     receta_id: int,
     medicamento_id: int,
-    service: RecetaService = Depends(get_receta_service)
+    service: RecetaService = Depends(get_receta_service),
 ):
     try:
         service.agregar_medicamento(receta_id, medicamento_id)
@@ -109,13 +118,13 @@ def agregar_medicamento_a_receta(
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
+
 # ----------------------------------------------------
 # Endpoint 7: Obtener Medicamentos de una Receta
 # ----------------------------------------------------
 @router.get("/{receta_id}/medicamentos", response_model=List[MedicamentoOut])
 def obtener_medicamentos_de_receta(
-    receta_id: int,
-    service: RecetaService = Depends(get_receta_service)
+    receta_id: int, service: RecetaService = Depends(get_receta_service)
 ):
     try:
         return service.obtener_medicamentos_de_receta(receta_id)

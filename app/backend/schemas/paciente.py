@@ -21,4 +21,4 @@ class PacienteOut(PacienteBase):
     UltimaVisita: Optional[str] = None
     ProximoTurno: Optional[str] = None
     class Config:
-        orm_mode = True
+        from_attributes = True
