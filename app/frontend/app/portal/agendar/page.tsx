@@ -2,7 +2,7 @@
 
 import AppointmentScheduler from '../../components/AppointmentScheduler';
 import { headers } from 'next/headers';
-import { getPacienteByUserId } from '@/services/pacientes';
+import { getPacientePorUserId } from '@/services/pacientes';
 
 // Componente de Servidor para el layout
 export default async function AgendarTurnoPage() {
@@ -12,7 +12,7 @@ export default async function AgendarTurnoPage() {
 
   if (userId) {
     try {
-      const paciente = await getPacienteByUserId(userId);
+      const paciente = await getPacientePorUserId(parseInt(userId));
       patientId = paciente.nroPaciente;
     } catch (error) {
       console.error("Error fetching patient:", error);

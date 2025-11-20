@@ -5,7 +5,7 @@ import { headers } from "next/dist/server/request/headers";
 // CAMBIO IMPORTANTE: Quitamos el "/api/medicos" de la base si vamos a agregar "/medicos" abajo.
 // O dejamos solo la base.
 // Opción recomendada: Apuntar a la raíz del servidor
-const API_URL = "http://localhost:8000/api/medicos";
+const API_URL = "http://localhost:8000/api/medicos/medicos";
 
 interface MedicoFilters {
   matricula?: string;

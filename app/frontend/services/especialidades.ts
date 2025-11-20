@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8000/api/especialidades";
+const API_URL = "http://localhost:8000/api/especialidades/especialidades";
 
 interface EspecialidadFilters {
   nombre?: string;

@@ -4,10 +4,10 @@ import { createContext, useState, useContext, ReactNode, useEffect } from 'react
 
 
 interface PacienteData {
-    Numero: number;
+    nroPaciente: number;
     Nombre: string;
     Apellido: string;
-    email_usuario: string;
+    Email: string;
 }
 
 interface PacienteContextType {

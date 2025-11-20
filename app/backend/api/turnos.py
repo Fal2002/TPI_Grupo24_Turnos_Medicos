@@ -61,11 +61,13 @@ def registrar_turno(
 def obtener_todos_los_turnos(service: TurnoService = Depends(get_turno_service)):
     return service.obtener_turnos()
 
+
 @router.get("/medico/{matricula}", response_model=List[TurnoOut])
 def obtener_turnos_por_medico(
     matricula: str, service: TurnoService = Depends(get_turno_service)
 ):
     return service.obtener_turnos_por_medico(matricula)
+
 
 @router.get("/paciente/{nro_paciente}", response_model=List[TurnoOut])
 def obtener_turnos_por_paciente(
@@ -73,13 +75,14 @@ def obtener_turnos_por_paciente(
 ):
     return service.obtener_turnos_por_paciente(nro_paciente)
 
+
 # ----------------------------------------------------
 # Endpoint 3: Cambios de Estado (Patrón State)
 # ----------------------------------------------------
 @router.patch(
     "/{fecha}/{hora}/{nro_paciente}/{accion}",
     response_model=TurnoOut,
-    dependencies=[Depends(role_required(["Administrador", "Médico"]))],
+    # dependencies=[Depends(role_required(["Administrador", "Médico", "Paciente"]))],
 )
 def gestionar_estado_turno(
     fecha: str,
@@ -135,7 +138,8 @@ def eliminar_turno_endpoint(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Turno no encontrado"
         )
-    
+
+
 @router.put("/{fecha}/{hora}/{nro_paciente}", response_model=TurnoOut)
 def actualizar_turno_endpoint(
     fecha: str,
@@ -151,7 +155,7 @@ def actualizar_turno_endpoint(
         # Convert date to string if present, to match DB format (Text)
         if "Fecha" in nuevos_datos:
             nuevos_datos["Fecha"] = str(nuevos_datos["Fecha"])
-            
+
         return service.modificar_turno(pk_data, nuevos_datos)
 
     except RecursoNoEncontradoError as e:
