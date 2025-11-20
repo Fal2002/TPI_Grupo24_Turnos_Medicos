@@ -12,9 +12,13 @@ import {
   registrarAgendaRegular, 
   eliminarAgendaRegular,
   registrarAgendaExcepcional,
+  getAgendasExcepcionales,
+  eliminarAgendaExcepcional,
   AgendaRegularPostEntry,
   AgendaRegularOut,
-  AgendaRegularId
+  AgendaRegularId,
+  AgendaExcepcionalOut,
+  AgendaExcepcionalId
 } from '@/services/agendas';
 
 // --- Interfaces y Tipos ---
@@ -73,6 +77,7 @@ export default function AgendaManager({
   const [regularDuration, setRegularDuration] = useState(30);
   
   // Estados para Agenda Excepcional
+  const [savedExceptions, setSavedExceptions] = useState<AgendaExcepcionalOut[]>([]);
   const [exceptionType, setExceptionType] = useState<'availability' | 'non-availability'>('non-availability');
   const [exceptionStartDate, setExceptionStartDate] = useState('');
   const [exceptionEndDate, setExceptionEndDate] = useState('');
@@ -84,9 +89,10 @@ export default function AgendaManager({
 
       setIsLoading(true);
       try {
-        const [sucursalesData, agendasData] = await Promise.all([
+        const [sucursalesData, agendasData, excepcionesData] = await Promise.all([
           getSucursales(),
-          getAgendasRegulares(medicoMatricula)
+          getAgendasRegulares(medicoMatricula),
+          getAgendasExcepcionales(medicoMatricula)
         ]);
         
         setBranches(sucursalesData);
@@ -99,6 +105,7 @@ export default function AgendaManager({
         );
         
         setSavedAgendas(agendasForSpecialty);
+        setSavedExceptions(excepcionesData);
         // Limpiamos el formulario de creación cada vez que cambia la especialidad
         setRegularSchedule([]);
 
@@ -174,16 +181,33 @@ export default function AgendaManager({
     e.preventDefault();
     setIsSubmitting(true);
     
-    // El input 'datetime-local' genera "YYYY-MM-DDTHH:mm". La API podría necesitar segundos.
-    const formatISODate = (date: string) => date ? `${date}:00` : '';
+    // El input 'datetime-local' genera "YYYY-MM-DDTHH:mm".
+    const splitDateTime = (isoString: string) => {
+        if (!isoString) return { date: '', time: '' };
+        const [date, time] = isoString.split('T');
+        return { date, time };
+    };
+
+    const start = splitDateTime(exceptionStartDate);
+    const end = splitDateTime(exceptionEndDate);
 
     try {
-      await registrarAgendaExcepcional(medicoMatricula, {
-        tipo_excepcion: exceptionType,
-        fecha_inicio: formatISODate(exceptionStartDate),
-        fecha_fin: formatISODate(exceptionEndDate),
+      const newException = await registrarAgendaExcepcional(medicoMatricula, {
+        Fecha_inicio: start.date,
+        Hora_inicio: start.time,
+        Fecha_Fin: end.date,
+        Hora_Fin: end.time,
+        Es_Disponible: exceptionType === 'availability' ? 1 : 0,
+        Especialidad_Id: activeSpecialtyId,
+        // Usamos la sucursal seleccionada en la pestaña regular como default si es disponibilidad extra
+        // Ojo: Esto asume que el usuario seleccionó algo en la otra pestaña o que hay un default.
+        // Si se requiere consultorio específico, habría que agregar inputs. Por ahora enviamos defaults o nulls.
+        Consultorio_Sucursal_Id: exceptionType === 'availability' ? Number(regularBranchId) : undefined,
+        Consultorio_Numero: exceptionType === 'availability' ? 1 : undefined, // Hardcodeado temporalmente o requerir input
+        Motivo: 'Excepción de agenda' // Se podría agregar un input para esto
       });
       alert('¡Excepción guardada con éxito!');
+      setSavedExceptions([...savedExceptions, newException]);
       // Limpiar formulario
       setExceptionStartDate('');
       setExceptionEndDate('');
@@ -192,6 +216,26 @@ export default function AgendaManager({
       alert(`Error al guardar: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteException = async (ex: AgendaExcepcionalOut) => {
+    if (!window.confirm("¿Está seguro de que desea eliminar esta excepción?")) return;
+    
+    const id: AgendaExcepcionalId = {
+        Especialidad_Id: ex.Especialidad_Id,
+        Fecha_inicio: ex.Fecha_inicio,
+        Hora_inicio: ex.Hora_inicio
+    };
+
+    try {
+      await eliminarAgendaExcepcional(medicoMatricula, id);
+      setSavedExceptions(prev => prev.filter(e => 
+        e.Fecha_inicio !== ex.Fecha_inicio || e.Hora_inicio !== ex.Hora_inicio
+      ));
+    } catch (error) {
+      console.error(error);
+      alert("Error al eliminar excepción");
     }
   };
   
@@ -300,6 +344,7 @@ export default function AgendaManager({
         )}
 
         {activeTab === 'exceptional' && (
+          <>
           <form onSubmit={handleSaveException} className="space-y-6">
              <h2 className="text-xl font-bold text-gray-700">Programar una Excepción para <span className="text-blue-600">{activeSpecialtyName}</span></h2>
              <div>
@@ -331,6 +376,39 @@ export default function AgendaManager({
               </button>
             </div>
           </form>
+          
+          <div className="mt-10 pt-6 border-t-2 border-gray-200">
+              <h2 className="text-xl font-bold text-gray-700 flex items-center gap-3">
+                <CalendarCheck2 size={24} />
+                Excepciones Cargadas
+              </h2>
+              {savedExceptions.length > 0 ? (
+                <div className="space-y-3 mt-4">
+                  {savedExceptions.map(ex => (
+                    <div key={`${ex.Fecha_inicio}-${ex.Hora_inicio}`} className="grid grid-cols-[1fr,auto] items-center p-3 bg-white border rounded-lg shadow-sm">
+                      <div>
+                        <p className="font-bold text-gray-800">
+                            {ex.Es_Disponible === 1 ? 'Disponibilidad Extra' : 'No Disponibilidad'}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Desde: <span className="font-medium">{ex.Fecha_inicio} {ex.Hora_inicio}</span>
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Hasta: <span className="font-medium">{ex.Fecha_Fin} {ex.Hora_Fin}</span>
+                        </p>
+                        {ex.Motivo && <p className="text-sm text-gray-500 italic">Motivo: {ex.Motivo}</p>}
+                      </div>
+                      <button onClick={() => handleDeleteException(ex)} className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50">
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 text-gray-500">No hay excepciones cargadas.</p>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -171,6 +171,33 @@ const AdminSidebar = () => {
               })}
             </ul>
           </nav>
+          <div className="mt-8">
+            <h3 className="text-gray-400 uppercase text-xs font-semibold mb-3">Reportes</h3>
+            <nav>
+              <ul className="space-y-2">
+                {navReports.map((item) => {
+                  const isActive = pathname.startsWith(item.href);
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={isMobileMenuOpen ? toggleMobileMenu : undefined}
+                        className={`flex items-center p-3 rounded-lg transition-colors
+                                    ${isActive
+                                      ? 'bg-blue-700 text-white shadow-md' 
+                                      : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                    }`}
+                      >
+                        <item.icon className={`mr-3 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} size={20} />
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+
+              </ul>
+            </nav>
+          </div>
         </div>
 
         <div className="mt-auto">

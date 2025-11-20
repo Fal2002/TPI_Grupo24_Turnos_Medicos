@@ -64,10 +64,15 @@ export interface AgendaRegularId {
  * Coincide con el esquema 'AgendaExcepcionalCreate' de FastAPI.
  */
 export interface AgendaExcepcionalPayload {
-  tipo_excepcion: 'availability' | 'non-availability';
-  fecha_inicio: string; // Formato ISO: "YYYY-MM-DDTHH:mm:ss"
-  fecha_fin: string;    // Formato ISO: "YYYY-MM-DDTHH:mm:ss"
-  motivo?: string;
+  Fecha_inicio: string;
+  Hora_inicio: string;
+  Fecha_Fin: string;
+  Hora_Fin: string;
+  Es_Disponible: number;
+  Motivo?: string;
+  Especialidad_Id: number;
+  Consultorio_Numero?: number;
+  Consultorio_Sucursal_Id?: number;
 }
 
 /**
@@ -75,12 +80,25 @@ export interface AgendaExcepcionalPayload {
  * Coincide con el esquema 'AgendaExcepcionalOut' de FastAPI.
  */
 export interface AgendaExcepcionalOut {
-  id: number;
-  medico_matricula: string;
-  tipo_excepcion: string;
-  fecha_inicio: string;
-  fecha_fin: string;
-  motivo?: string;
+  Fecha_inicio: string;
+  Hora_inicio: string;
+  Fecha_Fin: string;
+  Hora_Fin: string;
+  Es_Disponible: number;
+  Motivo: string;
+  Especialidad_Id: number;
+  Consultorio_Numero: number;
+  Consultorio_Sucursal_Id: number;
+  Medico_Matricula: string;
+}
+
+/**
+ * Identificador único para eliminar un registro específico de agenda excepcional.
+ */
+export interface AgendaExcepcionalId {
+  Especialidad_Id: number;
+  Fecha_inicio: string;
+  Hora_inicio: string;
 }
 
 // --- SERVICIOS ---
@@ -127,6 +145,22 @@ export const registrarAgendaRegular = async (
 };
 
 /**
+ * Obtiene todas las excepciones de agenda de un médico.
+ * @param matricula - La matrícula del médico.
+ * @returns Una promesa que se resuelve con la lista de excepciones.
+ */
+export const getAgendasExcepcionales = async (matricula: string): Promise<AgendaExcepcionalOut[]> => {
+  const response = await fetch(`${API_BASE_URL}/medicos/${matricula}/agenda/excepcional`);
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Error al obtener las excepciones de agenda' }));
+    throw new Error(errorData.detail);
+  }
+
+  return response.json();
+};
+
+/**
  * Registra una nueva excepción en la agenda de un médico.
  * @param matricula - La matrícula del médico.
  * @param payload - Los datos de la excepción a crear.
@@ -147,6 +181,8 @@ export const registrarAgendaExcepcional = async (matricula: string, payload: Age
   return response.json();
 };
 
+
+
 /**
  * Elimina un registro específico de la agenda regular de un médico.
  * Usa query params para enviar la clave compuesta, como lo infiere la firma de la función en FastAPI.
@@ -160,7 +196,6 @@ export const eliminarAgendaRegular = async (matricula: string, id: AgendaRegular
     dia_de_semana: String(id.Dia_de_semana),
     hora_inicio: id.Hora_inicio,
   });
-
   // El path param {agenda_id} en la API parece ser un placeholder no utilizado,
   // por lo que lo reemplazamos con un valor genérico como 'item' o '0'.
   // Lo importante son los query params que sí lee la función del backend.
@@ -174,6 +209,27 @@ export const eliminarAgendaRegular = async (matricula: string, id: AgendaRegular
   // Un status 204 (No Content) es una respuesta exitosa para DELETE
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ detail: 'Error al eliminar el horario' }));
+    throw new Error(errorData.detail);
+  }
+};
+
+export const eliminarAgendaExcepcional = async (matricula: string, id: AgendaExcepcionalId): Promise<void> => {
+  // Construimos los parámetros de consulta (query params) para la URL
+  const queryParams = new URLSearchParams({
+    especialidad_id: String(id.Especialidad_Id),
+    fecha_inicio: id.Fecha_inicio,
+    hora_inicio: id.Hora_inicio,
+  });
+  const response = await fetch(
+    `${API_BASE_URL}/medicos/${matricula}/agenda/excepcional/item?${queryParams}`,
+    {
+      method: 'DELETE',
+    }
+  );
+
+  // Un status 204 (No Content) es una respuesta exitosa para DELETE
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Error al eliminar la excepción' }));
     throw new Error(errorData.detail);
   }
 };
