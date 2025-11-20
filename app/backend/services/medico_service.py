@@ -81,6 +81,13 @@ class MedicoService:
                 f"Médico con matrícula {matricula} no encontrado."
             )
         return medico
+    def obtener_medico_por_user_id(self, user_id: int) -> Medico:
+        medico = self.medico_repo.get_by_user_id(user_id)
+        if not medico:
+            raise RecursoNoEncontradoError(
+                f"Médico con User_Id {user_id} no encontrado."
+            )
+        return medico
 
     def actualizar_medico(self, matricula: str, data: MedicoUpdate) -> Medico:
         medico = self.obtener_medico(matricula)

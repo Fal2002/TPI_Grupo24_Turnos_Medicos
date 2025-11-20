@@ -60,6 +60,14 @@ def obtener_medico(
         raise HTTPException(status_code=404, detail="Médico no encontrado")
     return medico
 
+@router.get("/user/{user_id}", response_model=MedicoOut)
+def obtener_medico_por_user_id(
+    user_id: int, medico_service: MedicoService = Depends(get_medico_service)
+):
+    medico = medico_service.obtener_medico_por_user_id(user_id)
+    if not medico:
+        raise HTTPException(status_code=404, detail="Médico no encontrado")
+    return medico
 
 @router.put(
     "/{matricula}",
