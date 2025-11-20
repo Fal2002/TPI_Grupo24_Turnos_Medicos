@@ -1,15 +1,14 @@
 from pydantic import BaseModel
-from typing import Optional
+from app.backend.schemas.medicamento import MedicamentoOut
 
-class DetalleRecetaBase(BaseModel):
+class DetalleRecetaCreate(BaseModel):
     Medicamento_Id: int
-
-class DetalleRecetaCreate(DetalleRecetaBase):
-    pass
 
 class DetalleRecetaOut(BaseModel):
-    Receta_Id: int
-    Medicamento_Id: int
+    Id: int
+    medicamento: MedicamentoOut
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+DetalleRecetaOut.update_forward_refs()

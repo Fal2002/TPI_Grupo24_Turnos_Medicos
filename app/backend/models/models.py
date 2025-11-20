@@ -179,7 +179,6 @@ class Receta(Base):
     __tablename__ = "Recetas"
 
     Id = Column(Integer, primary_key=True, autoincrement=True)
-
     Turno_Fecha = Column(Text, nullable=False)
     Turno_Hora = Column(Text, nullable=False)
     Turno_Paciente_nroPaciente = Column(Integer, nullable=False)
@@ -194,8 +193,11 @@ class Receta(Base):
     )
 
     turno = relationship("Turno", back_populates="recetas")
-    detalles = relationship("DetalleReceta", back_populates="receta", cascade="all, delete-orphan")
-
+    detalles = relationship(
+        "DetalleReceta",
+        back_populates="receta",
+        lazy="joined"
+    )
 
 class Droga(Base):
     __tablename__ = "Drogas"
@@ -221,8 +223,9 @@ class Medicamento(Base):
 class DetalleReceta(Base):
     __tablename__ = "Detalles_Recetas"
 
-    Receta_Id = Column(Integer, ForeignKey("Recetas.Id", ondelete="CASCADE"), primary_key=True)
-    Medicamento_Id = Column(Integer, ForeignKey("Medicamentos.Id", ondelete="RESTRICT"), primary_key=True)
+    Id = Column(Integer, primary_key=True, autoincrement=True)
+    Receta_Id = Column(Integer, ForeignKey("Recetas.Id", ondelete="CASCADE"), nullable=True)  # se asocia luego
+    Medicamento_Id = Column(Integer, ForeignKey("Medicamentos.Id", ondelete="RESTRICT"), nullable=False)
 
     receta = relationship("Receta", back_populates="detalles")
-    medicamento = relationship("Medicamento", back_populates="detalles")
+    medicamento = relationship("Medicamento", back_populates="detalles", lazy="joined")

@@ -11,4 +11,4 @@ class EspecialidadOut(EspecialidadBase):
     Id_especialidad: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True

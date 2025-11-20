@@ -1,43 +1,40 @@
 from sqlalchemy.orm import Session
-from app.backend.models.models import DetalleReceta, Receta, Medicamento
+from app.backend.models.models import DetalleReceta, Medicamento
+from app.backend.schemas.detalle_receta import DetalleRecetaOut
 
-
-def agregar_medicamento_a_receta(db: Session, receta_id: int, medicamento_id: int):
-    receta = db.query(Receta).filter(Receta.Id == receta_id).first()
-    if not receta:
-        raise Exception("La receta no existe")
-
+def crear_detalle(db: Session, medicamento_id: int):
     medicamento = db.query(Medicamento).filter(Medicamento.Id == medicamento_id).first()
     if not medicamento:
         raise Exception("Medicamento no existe")
 
-    existe = db.query(DetalleReceta).filter(
-        DetalleReceta.Receta_Id == receta_id,
-        DetalleReceta.Medicamento_Id == medicamento_id
-    ).first()
-
-    if existe:
-        raise Exception("El medicamento ya está asociado a la receta")
-
-    detalle = DetalleReceta(
-        Receta_Id=receta_id,
-        Medicamento_Id=medicamento_id
-    )
+    detalle = DetalleReceta(Medicamento_Id=medicamento_id)
     db.add(detalle)
     db.commit()
     db.refresh(detalle)
     return detalle
 
-
-def eliminar_detalle_receta(db: Session, receta_id: int, medicamento_id: int):
-    detalle = db.query(DetalleReceta).filter(
-        DetalleReceta.Receta_Id == receta_id,
-        DetalleReceta.Medicamento_Id == medicamento_id
-    ).first()
-
+def asociar_detalle_a_receta(db: Session, receta_id: int, detalle_id: int):
+    detalle = db.query(DetalleReceta).filter(DetalleReceta.Id == detalle_id).first()
     if not detalle:
         raise Exception("Detalle no encontrado")
+    detalle.Receta_Id = receta_id
+    db.commit()
+    db.refresh(detalle)
+    return detalle
 
+def eliminar_detalle(db: Session, detalle_id: int):
+    detalle = db.query(DetalleReceta).filter(DetalleReceta.Id == detalle_id).first()
+    if not detalle:
+        raise Exception("Detalle no encontrado")
     db.delete(detalle)
     db.commit()
     return True
+
+def get_detalles(db: Session):
+    return db.query(DetalleReceta).all()
+
+def get_detalle_by_id(db: Session, detalle_id: int):
+    detalle = db.query(DetalleReceta).filter(DetalleReceta.Id == detalle_id).first()
+    if not detalle:
+        raise Exception("Detalle no encontrado")
+    return detalle
