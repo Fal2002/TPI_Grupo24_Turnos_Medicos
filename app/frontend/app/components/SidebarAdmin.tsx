@@ -19,6 +19,7 @@ import {
   ChevronDown,
   BarChart3 
 } from 'lucide-react';
+import LogOutButton from './LogOut';
 
 interface NavItem {
   href: string;
@@ -41,7 +42,7 @@ const LogoutButton = () => {
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     try {
-      await fetch("http://localhost:8000/users/logout", {
+      await fetch("http://localhost:8000/api/auth/logout", {
         method: "POST",
         credentials: "include",
       });
@@ -165,32 +166,6 @@ const AdminSidebar = () => {
 
                       </ul>
                     </div>
-                  </li>
-                );
-              })}
-            </ul>
-
-            <div className="my-4 border-t border-gray-800"></div>
-
-            <ul className="space-y-2">
-              {navReports.map((item) => {
-                const isActive = pathname.startsWith(item.href);
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={isMobileMenuOpen ? toggleMobileMenu : undefined}
-                      className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 z-10 relative
-                                  ${isActive
-                                    ? 'bg-blue-700 text-white shadow-md' 
-                                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                                  }`}
-                    >
-                      <div className="flex items-center">
-                        <item.icon className={`mr-3 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} size={20} />
-                        <span className="font-medium">{item.label}</span>
-                      </div>
-                    </Link>
                   </li>
                 );
               })}

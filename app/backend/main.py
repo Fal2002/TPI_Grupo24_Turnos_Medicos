@@ -24,13 +24,16 @@ async def lifespan(app: FastAPI):
     # Se ejecuta AL APAGAR FastAPI (opcional)
     print("▶ Finalizando Turnero Médico API...")
 
-
+origins = [
+    "http://localhost:3000",
+    # "https://tu-sitio-en-produccion.com", 
+]
 # ⭐ Declaración correcta del objeto FastAPI usando lifespan
 app = FastAPI(title="Turnero Médico API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite todos los orígenes
+    allow_origins=origins,  # Permite todos los orígenes
     allow_credentials=True,
     allow_methods=["*"],  # Permite todos los métodos
     allow_headers=["*"],  # Permite todos los encabezados
