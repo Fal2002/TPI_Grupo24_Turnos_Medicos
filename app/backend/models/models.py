@@ -203,8 +203,10 @@ class Turno(Base):
     Diagnostico = Column(Text)
 
     estado_rel = relationship("Estado")
-    paciente = relationship("Paciente", back_populates="turnos")
+    Paciente = relationship("Paciente")
+    Medico = relationship("Medico")
 
+    # PROPIEDAD PARA OBTENER EL NOMBRE DEL ESTADO (Texto)
     @property
     def estado(self):
         return self.estado_rel.Descripcion if self.estado_rel else None

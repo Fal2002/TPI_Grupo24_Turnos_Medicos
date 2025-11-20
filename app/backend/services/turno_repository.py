@@ -1,5 +1,5 @@
 from __future__ import annotations
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_
 from sqlalchemy.exc import IntegrityError
 from app.backend.models.models import Turno, Medico, Paciente, Estado, Especialidad
@@ -15,12 +15,8 @@ class TurnoRepository:
 
     def get_by_medico_matricula(self, matricula: str) -> List[Turno]:
         """Obtiene todos los turnos asociados a un médico específico por su matrícula."""
-        return (
-            self.db.query(Turno)
-            .filter(Turno.Medico_Matricula == matricula)
-            .all()
-        )
-    
+        return self.db.query(Turno).filter(Turno.Medico_Matricula == matricula).all()
+
     def get_by_paciente_nro(self, nro_paciente: int) -> List[Turno]:
         """Obtiene todos los turnos asociados a un paciente específico por su número de paciente."""
         return (
@@ -208,6 +204,44 @@ class TurnoRepository:
 
         result = query.all()
         return [row._asdict() for row in result]
+
+    def get_turnos_by_date(self, target_date: date) -> List[Turno]:
+        """Obtiene todos los turnos confirmados/pendientes para una fecha específica."""
+        # Se asume que el estado 'Confirmado' (Id=2) y 'Pendiente' (Id=1) son los estados a recordar
+
+        target_date_str = target_date.strftime("%Y-%m-%d")
+
+        return (
+            self.db.query(Turno)
+            .filter(Turno.Fecha == target_date_str, Turno.Estado_Id.in_([1, 2]))
+            .options(
+                joinedload(Turno.Paciente),
+                joinedload(Turno.Medico),  # Cargar datos del médico
+            )
+            .all()
+        )
+
+    def get_turnos_by_time_range(
+        self, target_date: date, start_time: time, end_time: time
+    ) -> List[Turno]:
+        """Obtiene turnos para una fecha específica que caen en un rango de hora, cargando Paciente y Medico."""
+
+        target_date_str = target_date.strftime("%Y-%m-%d")
+        # Convertir objetos time a string en formato HH:MM (SQLAlchemy necesita string)
+        start_time_str = start_time.strftime("%H:%M")
+        end_time_str = end_time.strftime("%H:%M")
+
+        return (
+            self.db.query(Turno)
+            .filter(
+                Turno.Fecha == target_date_str,
+                Turno.Estado_Id.in_([2]),  # Confirmado
+                Turno.Hora >= start_time_str,
+                Turno.Hora <= end_time_str,
+            )
+            .options(joinedload(Turno.Paciente), joinedload(Turno.Medico))
+            .all()
+        )
 
     def get_turnos_all_medicos_in_period(
         self, start_date: str, end_date: str

@@ -11,9 +11,7 @@ class AgendaRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    # ========================
-    # ROL A: CRUD (OMITIDO PARA BREVEDAD, SE ASUME CORRECTO)
-    # ========================
+    # ==================================================================
     def create_agenda_excepcional(
         self, medico_matricula: str, data: AgendaExcepcionalCreate
     ) -> AgendaExcepcional:
@@ -88,9 +86,7 @@ class AgendaRepository:
         self.db.delete(agenda)
         self.db.commit()
 
-    # =========================================================================
-    # ROL B: FUNCIÓN CRÍTICA DE VALIDACIÓN (Consultada por TurnoService)
-    # =========================================================================
+    # ==================================================================
 
     def verificar_disponibilidad(
         self, medico_matricula: str, fecha_turno: date, hora_turno: time, duracion: int
@@ -108,19 +104,36 @@ class AgendaRepository:
 
         # 1. CHEQUEO DE CONFLICTO con Turnos Existentes: (¡CORREGIDO!)
         # Solapamiento Simplificado: Chequea si otro turno empieza a la misma hora para ese médico.
-        turno_en_conflicto = (
+        turno_ocupado = (
             self.db.query(Turno)
             .filter(
                 Turno.Medico_Matricula == medico_matricula,
                 Turno.Fecha == fecha_turno.strftime("%Y-%m-%d"),
-                Turno.Hora == hora_inicio_str,  # Conflicto por la misma hora de inicio
                 Turno.Estado_Id.in_([1, 2, 7]),
             )
-            .first()
+            .all()
         )
 
-        if turno_en_conflicto:
-            return "El horario solicitado ya está ocupado por otro turno."
+        for turno_existente in turno_ocupado:
+            try:
+                exist_inicio = datetime.combine(
+                    fecha_turno, datetime.strptime(turno_existente.Hora, "%H:%M").time()
+                )
+            except ValueError:
+                print(
+                    f"ALERTA: Formato de hora inconsistente en DB: {turno_existente.Hora}"
+                )
+                continue
+
+            exist_duracion = (
+                turno_existente.Duracion
+                if turno_existente.Duracion and turno_existente.Duracion > 0
+                else 30
+            )
+            exist_fin = exist_inicio + timedelta(minutes=exist_duracion)
+
+            if turno_datetime < exist_fin and turno_fin > exist_inicio:
+                return f"El horario solicitado esta ocupado con otro turno que comenzó a las {turno_existente.Hora} y finaliza a las {exist_fin.strftime('%H:%M')}."
 
         # 2. CHEQUEO DE BLOQUEO Excepcional:
         bloqueo = (
@@ -235,13 +248,17 @@ class AgendaRepository:
             )
             .all()
         )
-    
+
     def delete_agenda_excepcional(self, agenda: AgendaExcepcional) -> None:
         self.db.delete(agenda)
         self.db.commit()
 
     def get_agenda_excepcional_by_pk(
-        self, medico_matricula: str, especialidad_id: int, fecha_inicio: str, hora_inicio: str
+        self,
+        medico_matricula: str,
+        especialidad_id: int,
+        fecha_inicio: str,
+        hora_inicio: str,
     ) -> AgendaExcepcional | None:
         return (
             self.db.query(AgendaExcepcional)
