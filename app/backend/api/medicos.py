@@ -1,7 +1,11 @@
+<<<<<<< HEAD
 from fastapi import APIRouter, Depends, HTTPException, status
+=======
+from fastapi import APIRouter, Depends
+>>>>>>> cambios-en-backend
 from sqlalchemy.orm import Session
-from typing import List, Optional
 from app.backend.db.db import get_db
+<<<<<<< HEAD
 from app.backend.services.medico_service import MedicoService
 from app.backend.services.medico_repository import MedicoRepository
 from app.backend.services.user_repository import UserRepository
@@ -83,8 +87,28 @@ def actualizar_medico(
     if not medico:
         raise HTTPException(status_code=404, detail="Médico no encontrado")
     return medico
+=======
+from app.backend.services.medico_service import (
+    get_medicos, get_medico_by_id, create_medico, delete_medico
+)
+from app.backend.schemas.medico import MedicoCreate, MedicoOut
 
+router = APIRouter(prefix="/medicos", tags=["Medicos"])
 
+@router.get("/", response_model=list[MedicoOut])
+def listar(db: Session = Depends(get_db)):
+    return get_medicos(db)
+
+@router.get("/{matricula}", response_model=MedicoOut)
+def obtener(matricula: str, db: Session = Depends(get_db)):
+    return get_medico_by_id(db, matricula)
+>>>>>>> cambios-en-backend
+
+@router.post("/", response_model=MedicoOut)
+def crear(data: MedicoCreate, db: Session = Depends(get_db)):
+    return create_medico(db, data)
+
+<<<<<<< HEAD
 @router.delete(
     "/{matricula}",
     # dependencies=[Depends(role_required(["Administrador"]))]
@@ -111,3 +135,8 @@ def obtener_especialidades_medico(
     if especialidades is None:
         raise HTTPException(status_code=404, detail="Médico no encontrado")
     return especialidades
+=======
+@router.delete("/{matricula}")
+def eliminar(matricula: str, db: Session = Depends(get_db)):
+    return delete_medico(db, matricula)
+>>>>>>> cambios-en-backend

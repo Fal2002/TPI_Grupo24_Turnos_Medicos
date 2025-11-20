@@ -1,133 +1,50 @@
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
-from app.backend.models.models import (
-    Receta, DetalleReceta, Medicamento, Turno,
-    Paciente, Medico, Especialidad, Sucursal
-)
+from sqlalchemy.orm import Session, joinedload
+from app.backend.models.models import Receta, Turno, DetalleReceta
 
-from app.backend.schemas.receta_completa import RecetaCompletaOut, MedicamentoRecetaOut
-from app.backend.schemas.receta import RecetaCreate
-
-
-def crear_receta(db: Session, data: RecetaCreate):
-    nueva = Receta(
-        Turno_Fecha=data.Turno_Fecha,
-        Turno_Hora=data.Turno_Hora,
-        Turno_Paciente_nroPaciente=data.Turno_Paciente_nroPaciente
-    )
-    db.add(nueva)
-    db.commit()
-    db.refresh(nueva)
-    return nueva
-
-
-def listar_recetas(db: Session):
-    return db.query(Receta).all()
-
-
-def obtener_receta(db: Session, id: int):
-    receta = db.query(Receta).filter(Receta.Id == id).first()
-    if not receta:
-        raise HTTPException(status_code=404, detail="Receta no encontrada")
-    return receta
-
-
-def eliminar_receta(db: Session, id: int):
-    receta = db.query(Receta).filter(Receta.Id == id).first()
-    if not receta:
-        raise HTTPException(status_code=404, detail="Receta no encontrada")
-    
-    db.query(DetalleReceta).filter(DetalleReceta.Receta_Id == id).delete(synchronize_session='fetch')
-    
-    db.delete(receta)
-    
-    try:
-        db.commit()
-        return {"msg": "Receta eliminada correctamente"}
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=400,
-            detail="No se pudo eliminar la receta debido a una restricción de clave foránea. Verifica si está siendo referenciada por otra tabla no prevista."
-        )
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error inesperado durante la eliminación de la receta: {e}" 
-        )
-
-
-def obtener_receta_completa(db: Session, id: int):
-    receta = db.query(Receta).filter(Receta.Id == id).first()
-    if not receta:
-        raise HTTPException(status_code=404, detail="Receta no encontrada")
-
-
-    turno = (
-        db.query(Turno)
-        .filter(
-            Turno.Fecha == receta.Turno_Fecha,
-            Turno.Hora == receta.Turno_Hora,
-            Turno.Paciente_nroPaciente == receta.Turno_Paciente_nroPaciente
-        )
-        .first()
-    )
+def crear_receta(db: Session, data):
+    turno = db.query(Turno).filter(
+        Turno.Fecha == data.Turno_Fecha,
+        Turno.Hora == data.Turno_Hora,
+        Turno.Paciente_nroPaciente == data.Turno_Paciente_nroPaciente
+    ).first()
 
     if not turno:
-        raise HTTPException(status_code=500, detail="Turno asociado no encontrado")
+        raise Exception("El turno especificado no existe")
 
-
-    paciente = db.query(Paciente).filter(Paciente.nroPaciente == turno.Paciente_nroPaciente).first()
-    medico = db.query(Medico).filter(Medico.Matricula == turno.Medico_Matricula).first()
-    especialidad = db.query(Especialidad).filter(Especialidad.Id_especialidad == turno.Especialidad_Id).first()
-    sucursal = db.query(Sucursal).filter(Sucursal.Id == turno.Sucursal_Id).first()
-
-
-    detalles = (
-        db.query(DetalleReceta, Medicamento)
-        .join(Medicamento, Medicamento.Id == DetalleReceta.Medicamento_Id)
-        .filter(DetalleReceta.Receta_Id == id)
-        .all()
+    receta = Receta(
+        Turno_Fecha=data.Turno_Fecha,
+        Turno_Hora=data.Turno_Hora,
+        Turno_Paciente_nroPaciente=data.Turno_Paciente_nroPaciente,
     )
+    db.add(receta)
+    db.commit()
+    db.refresh(receta)
 
+    # asociar detalles existentes
+    for det_id in getattr(data, "Detalles_Ids", []):
+        detalle = db.query(DetalleReceta).filter(DetalleReceta.Id == det_id).first()
+        if not detalle:
+            raise Exception(f"Detalle con ID {det_id} no existe")
+        detalle.Receta_Id = receta.Id
 
-    lista_medicamentos = []
-    for detalle, med in detalles:
-        dosis = None
-        if med.dosis_cantidad is not None or med.dosis_unidad is not None or med.dosis_frecuencia is not None:
-            dosis = {
-                "cantidad": med.dosis_cantidad,
-                "unidad": med.dosis_unidad,
-                "frecuencia": med.dosis_frecuencia
-            }
+    db.commit()
+    db.refresh(receta)
+    return receta
 
+def get_recetas(db: Session):
+    return db.query(Receta).options(
+        joinedload(Receta.detalles).joinedload(DetalleReceta.medicamento)
+    ).all()
 
-        lista_medicamentos.append(
-            MedicamentoRecetaOut(
-                Id=med.Id,
-                Nombre=med.Nombre,
-                Droga_Id=med.Droga_Id,
-                Dosis=dosis
-            )
-        )
+def get_receta_by_id(db: Session, receta_id: int):
+    return db.query(Receta).options(
+        joinedload(Receta.detalles).joinedload(DetalleReceta.medicamento)
+    ).filter(Receta.Id == receta_id).first()
 
-
-    return RecetaCompletaOut(
-        Receta_Id=receta.Id,
-        Fecha=turno.Fecha,
-        Hora=turno.Hora,
-        Paciente={
-            "Id": paciente.nroPaciente,
-            "Nombre": paciente.Nombre,
-            "Apellido": paciente.Apellido
-        },
-        Medico={
-            "Matricula": medico.Matricula,
-            "Nombre": medico.Nombre,
-            "Apellido": medico.Apellido
-        },
-        Especialidad=especialidad.descripcion if especialidad else None,
-        Sucursal=sucursal.Nombre if sucursal else None,
-        Medicamentos=lista_medicamentos
-    )
+def eliminar_receta(db: Session, receta_id: int):
+    receta = get_receta_by_id(db, receta_id)
+    if not receta:
+        raise Exception("Receta no encontrada")
+    db.delete(receta)
+    db.commit()
+    return True

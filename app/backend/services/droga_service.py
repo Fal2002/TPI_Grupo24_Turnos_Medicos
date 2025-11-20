@@ -1,6 +1,7 @@
 from app.backend.services.droga_repository import DrogaRepository
 from app.backend.models.models import Droga
 from app.backend.schemas.droga import DrogaCreate
+<<<<<<< HEAD
 from app.backend.services.exceptions import RecursoNoEncontradoError
 from sqlalchemy.orm import Session
 from typing import List
@@ -27,3 +28,23 @@ class DrogaService:
     def eliminar_droga(self, id: int) -> None:
         droga = self.obtener_droga_por_id(id)
         self.droga_repo.delete(droga)
+=======
+
+def get_drogas(db: Session):
+    return db.query(Droga).all()
+
+
+def get_droga_by_id(db: Session, id: int):
+    d = db.query(Droga).filter(Droga.Id == id).first()
+    if not d:
+        raise HTTPException(404, "Droga no encontrada")
+    return d
+
+
+def create_droga(db: Session, data: DrogaCreate):
+    nueva = Droga(**data.dict())
+    db.add(nueva)
+    db.commit()
+    db.refresh(nueva)
+    return nueva
+>>>>>>> cambios-en-backend

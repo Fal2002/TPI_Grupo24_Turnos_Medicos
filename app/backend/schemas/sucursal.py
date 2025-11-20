@@ -1,8 +1,9 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class SucursalBase(BaseModel):
+    Direccion: Optional[str]
     Nombre: str
-    Direccion: str | None = None
 
 class SucursalCreate(SucursalBase):
     pass

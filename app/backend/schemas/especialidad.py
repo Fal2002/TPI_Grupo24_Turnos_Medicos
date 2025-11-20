@@ -1,13 +1,11 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class EspecialidadBase(BaseModel):
     descripcion: str
 
 class EspecialidadCreate(EspecialidadBase):
     pass
-
-class EspecialidadUpdate(BaseModel):
-    descripcion: str | None = None
 
 class EspecialidadOut(EspecialidadBase):
     Id_especialidad: int

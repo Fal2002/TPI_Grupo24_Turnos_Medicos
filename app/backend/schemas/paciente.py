@@ -4,21 +4,19 @@ from typing import Optional
 class PacienteBase(BaseModel):
     Nombre: str
     Apellido: str
-    Telefono: Optional[str] = None
-    Email: Optional[EmailStr] = None
+    Teléfono: Optional[str]
+    Email: Optional[EmailStr]
 
 class PacienteCreate(PacienteBase):
     pass
 
-class PacienteUpdate(BaseModel):
-    Nombre: Optional[str] = None
-    Apellido: Optional[str] = None
-    Telefono: Optional[str] = None
-    Email: Optional[EmailStr] = None
-
 class PacienteOut(PacienteBase):
     nroPaciente: int
+<<<<<<< HEAD
     UltimaVisita: Optional[str] = None
     ProximoTurno: Optional[str] = None
+=======
+
+>>>>>>> cambios-en-backend
     class Config:
         from_attributes = True
