@@ -430,56 +430,192 @@ def seed_agendas_regulares(db: Session):
 
 
 def seed_turnos(db: Session):
-    """Crea turnos de ejemplo"""
-    print("🗓️  Creando turnos...")
+    print("🗓️  Creando turnos con reglas estrictas de fechas...")
 
-    # Obtener datos necesarios
     pacientes = db.query(Paciente).all()
     medicos = db.query(Medico).all()
-    estados = db.query(Estado).all()
+
+    # Estados
+    ESTADO_PENDIENTE = 1
+    ESTADO_CONFIRMADO = 2
+    ESTADO_CANCELADO = 3
+    ESTADO_ATENDIDO = 4
+    ESTADO_FINALIZADO = 5
+    ESTADO_AUSENTE = 6
+
+    # Fecha "actual" fija
+    FECHA_ACTUAL = datetime(2025, 11, 20)
+
+    horas = ["08:00", "09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"]
 
     turnos = []
+    idx = 0
 
-    # Crear turnos para los próximos 7 días
-    fecha_base = datetime.now()
-
-    for i in range(30):  # 30 turnos de ejemplo
-        fecha = fecha_base + timedelta(days=(i % 7))
-        fecha_str = fecha.strftime("%Y-%m-%d")
-
-        # Horas de ejemplo
-        horas = ["08:00", "09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"]
-        hora = horas[i % len(horas)]
-
-        paciente = pacientes[i % len(pacientes)]
-        medico = medicos[i % len(medicos)]
-
-        # Obtener una especialidad del médico
-        medico_esp = (
+    # Helper: obtiene especialidad
+    def get_esp(medico):
+        return (
             db.query(MedicoEspecialidad)
             .filter(MedicoEspecialidad.Medico_Matricula == medico.Matricula)
             .first()
         )
 
-        estado = estados[i % len(estados)]
+    # ------------------------------
+    # FINALIZADOS (SOLO PASADO)
+    # ------------------------------
+    fechas_finalizados = [datetime(2025, 11, 10) + timedelta(days=i) for i in range(10)]
 
-        turno = Turno(
-            Fecha=fecha_str,
-            Hora=hora,
-            Paciente_nroPaciente=paciente.nroPaciente,
-            Medico_Matricula=medico.Matricula,
-            Especialidad_Id=medico_esp.Especialidad_Id,
-            Estado_Id=estado.Id,
-            Sucursal_Id=(i % 4) + 1,
-            Duracion=30,
-            Motivo=f"Consulta {i + 1}",
+    for fecha in fechas_finalizados:
+        medico = medicos[idx % len(medicos)]
+        paciente = pacientes[idx % len(pacientes)]
+        esp = get_esp(medico)
+
+        turnos.append(
+            Turno(
+                Fecha=fecha.strftime("%Y-%m-%d"),
+                Hora=horas[idx % len(horas)],
+                Paciente_nroPaciente=paciente.nroPaciente,
+                Medico_Matricula=medico.Matricula,
+                Especialidad_Id=esp.Especialidad_Id,
+                Estado_Id=ESTADO_FINALIZADO,
+                Sucursal_Id=(idx % 4) + 1,
+                Duracion=30,
+                Motivo=f"Finalizado {idx+1}",
+            )
         )
+        idx += 1
 
-        turnos.append(turno)
+    # ------------------------------
+    # ATENDIDOS (SOLO PASADO)
+    # ------------------------------
+    fechas_atendidos = [datetime(2025, 11, 11) + timedelta(days=i) for i in range(5)]
+
+    for fecha in fechas_atendidos:
+        medico = medicos[idx % len(medicos)]
+        paciente = pacientes[idx % len(pacientes)]
+        esp = get_esp(medico)
+
+        turnos.append(
+            Turno(
+                Fecha=fecha.strftime("%Y-%m-%d"),
+                Hora=horas[idx % len(horas)],
+                Paciente_nroPaciente=paciente.nroPaciente,
+                Medico_Matricula=medico.Matricula,
+                Especialidad_Id=esp.Especialidad_Id,
+                Estado_Id=ESTADO_ATENDIDO,
+                Sucursal_Id=(idx % 4) + 1,
+                Duracion=30,
+                Motivo=f"Atendido {idx+1}",
+            )
+        )
+        idx += 1
+
+    # ------------------------------
+    # AUSENTES (SOLO PASADO)
+    # ------------------------------
+    fechas_ausentes = [datetime(2025, 11, 12) + timedelta(days=i) for i in range(7)]
+
+    for fecha in fechas_ausentes:
+        medico = medicos[idx % len(medicos)]
+        paciente = pacientes[idx % len(pacientes)]
+        esp = get_esp(medico)
+
+        turnos.append(
+            Turno(
+                Fecha=fecha.strftime("%Y-%m-%d"),
+                Hora=horas[idx % len(horas)],
+                Paciente_nroPaciente=paciente.nroPaciente,
+                Medico_Matricula=medico.Matricula,
+                Especialidad_Id=esp.Especialidad_Id,
+                Estado_Id=ESTADO_AUSENTE,
+                Sucursal_Id=(idx % 4) + 1,
+                Duracion=30,
+                Motivo=f"Ausente {idx+1}",
+            )
+        )
+        idx += 1
+
+    # ------------------------------
+    # CANCELADOS (PASADO Y FUTURO)
+    # ------------------------------
+    fechas_cancelados = [
+        datetime(2025, 11, 13),  # pasado
+        datetime(2025, 11, 23),  # futuro
+    ]
+
+    for fecha in fechas_cancelados:
+        medico = medicos[idx % len(medicos)]
+        paciente = pacientes[idx % len(pacientes)]
+        esp = get_esp(medico)
+
+        turnos.append(
+            Turno(
+                Fecha=fecha.strftime("%Y-%m-%d"),
+                Hora=horas[idx % len(horas)],
+                Paciente_nroPaciente=paciente.nroPaciente,
+                Medico_Matricula=medico.Matricula,
+                Especialidad_Id=esp.Especialidad_Id,
+                Estado_Id=ESTADO_CANCELADO,
+                Sucursal_Id=(idx % 4) + 1,
+                Duracion=30,
+                Motivo=f"Cancelado {idx+1}",
+            )
+        )
+        idx += 1
+
+    # ------------------------------
+    # PENDIENTES (SOLO FUTURO)
+    # ------------------------------
+    fechas_pendientes = [datetime(2025, 11, 21) + timedelta(days=i) for i in range(5)]
+
+    for fecha in fechas_pendientes:
+        medico = medicos[idx % len(medicos)]
+        paciente = pacientes[idx % len(pacientes)]
+        esp = get_esp(medico)
+
+        turnos.append(
+            Turno(
+                Fecha=fecha.strftime("%Y-%m-%d"),
+                Hora=horas[idx % len(horas)],
+                Paciente_nroPaciente=paciente.nroPaciente,
+                Medico_Matricula=medico.Matricula,
+                Especialidad_Id=esp.Especialidad_Id,
+                Estado_Id=ESTADO_PENDIENTE,
+                Sucursal_Id=(idx % 4) + 1,
+                Duracion=30,
+                Motivo=f"Pendiente {idx+1}",
+            )
+        )
+        idx += 1
+
+    # ------------------------------
+    # CONFIRMADOS (SOLO FUTURO)
+    # ------------------------------
+    fechas_confirmados = [datetime(2025, 11, 22) + timedelta(days=i) for i in range(5)]
+
+    for fecha in fechas_confirmados:
+        medico = medicos[idx % len(medicos)]
+        paciente = pacientes[idx % len(pacientes)]
+        esp = get_esp(medico)
+
+        turnos.append(
+            Turno(
+                Fecha=fecha.strftime("%Y-%m-%d"),
+                Hora=horas[idx % len(horas)],
+                Paciente_nroPaciente=paciente.nroPaciente,
+                Medico_Matricula=medico.Matricula,
+                Especialidad_Id=esp.Especialidad_Id,
+                Estado_Id=ESTADO_CONFIRMADO,
+                Sucursal_Id=(idx % 4) + 1,
+                Duracion=30,
+                Motivo=f"Confirmado {idx+1}",
+            )
+        )
+        idx += 1
 
     db.add_all(turnos)
     db.commit()
-    print(f"✅ {len(turnos)} turnos creados")
+
+    print(f"✅ {len(turnos)} turnos creados con fechas válidas según reglas.")
 
 
 def seed_admin_user(db: Session):

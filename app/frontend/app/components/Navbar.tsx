@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import LogOut from './LogOut';
-
+import { Hospital } from 'lucide-react';
 
 
 const Navbar = async () => {
@@ -14,11 +14,15 @@ const Navbar = async () => {
     <nav className="bg-gray-800 p-4">
       <div className="container mx-auto flex justify-between items-center">
         {/* Logo */}
-        <div className="flex items-center">
-          <Link href="/" className="text-white text-2xl font-bold">
-            Logo
-          </Link>
-        </div>
+        <div className="mb-6 text-center"> {/* Reducido el margen inferior del logo */}
+            <Link href="/" className=" font-bold text-white hover:text-gray-300">
+              <span className="text-xl flex items-center justify-center gap-2">
+                <Hospital size={32} />
+                Turnero Médico
+              </span>
+            </Link>
+          </div>
+          <hr className="my-4 border-gray-700" />
 
         {/* Botones de Navegación */}
         <div className="hidden md:flex space-x-4">

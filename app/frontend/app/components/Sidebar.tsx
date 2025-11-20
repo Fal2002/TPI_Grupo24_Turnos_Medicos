@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { usePaciente } from '../contexts/PacienteConetxt';
 // 1. Importar el nuevo icono
-import { Home, PanelTop, Settings, Menu, X, LogOut, CalendarPlus, Calendar1, User } from 'lucide-react';
+import { Home, PanelTop, Settings, Menu, X, LogOut, CalendarPlus, Calendar1, User, Hospital } from 'lucide-react';
 
 interface NavItem {
   href: string;
@@ -80,10 +80,15 @@ const Sidebar = () => {
       >
         <div>
           <div className="mb-6 text-center"> {/* Reducido el margen inferior del logo */}
-            <Link href="/" className="text-2xl font-bold text-white hover:text-gray-300">
-              Mi Logo
+            <Link href="/" className=" font-bold text-white hover:text-gray-300">
+              <span className="text-xl flex items-center justify-center gap-2">
+                <Hospital size={32} />
+                Turnero Médico
+              </span>
             </Link>
           </div>
+          <hr className="my-4 border-gray-700" />
+          
           
         <div className="mb-4 p-4 bg-gray-800 rounded-lg text-white">
           <div className="flex items-center mb-2">

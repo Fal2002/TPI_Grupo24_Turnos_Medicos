@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 // Importamos iconos relevantes para el médico
-import { Menu, X, LogOut, CalendarDays, Users, Stethoscope, Notebook } from 'lucide-react';
+import { Menu, X, LogOut, CalendarDays, Users, Stethoscope, Notebook, Hospital } from 'lucide-react';
 import { useSpecialty } from '../contexts/SpecialtyContext'; // Ajusta la ruta
 import { getMedicoPorUserId } from '@/services/medicos';
 import { useMedico } from '../contexts/MedicoContext';
@@ -122,11 +122,15 @@ const { medico, activeSpecialty, setActiveSpecialty } = useMedico();
 
       <aside className={`fixed top-0 left-0 w-64 bg-gray-900 text-white p-5 transform transition-transform duration-300 ease-in-out z-20 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:fixed h-screen flex flex-col`}>
         <div>
-          <div className="mb-6 text-center">
-            <Link href="/medico" className="text-2xl font-bold text-white hover:text-gray-300">
-              Panel Médico
+          <div className="mb-6 text-center"> {/* Reducido el margen inferior del logo */}
+            <Link href="/" className=" font-bold text-white hover:text-gray-300">
+              <span className="text-xl flex items-center justify-center gap-2">
+                <Hospital size={32} />
+                Turnero Médico
+              </span>
             </Link>
           </div>
+          <hr className="my-4 border-gray-700" />
 
           {/* --- 4. SECCIÓN MODIFICADA: SELECTOR DE ESPECIALIDAD --- */}
           <div className="mb-6">

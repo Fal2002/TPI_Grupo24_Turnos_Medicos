@@ -17,7 +17,8 @@ import {
   Plus,        // Icono Crear
   LayoutList,  // Icono Gestionar (antes Eye)
   ChevronDown,
-  BarChart3 
+  BarChart3,
+  Hospital 
 } from 'lucide-react';
 import LogOutButton from './LogOut';
 
@@ -95,12 +96,15 @@ const AdminSidebar = () => {
                     md:translate-x-0 md:fixed h-screen flex flex-col border-r border-gray-800 overflow-y-auto`}
       >
         <div>
-          <div className="mb-8 text-center flex flex-col items-center">
-            <Link href="/admin" className="text-xl font-bold text-white hover:text-gray-300 tracking-wider">
-              ADMINISTRACIÓN
+          <div className="mb-6 text-center"> {/* Reducido el margen inferior del logo */}
+            <Link href="/" className=" font-bold text-white hover:text-gray-300">
+              <span className="text-xl flex items-center justify-center gap-2">
+                <Hospital size={32} />
+                Turnero Médico
+              </span>
             </Link>
-            <span className="text-xs text-gray-500 mt-1">Gestión Clínica</span>
           </div>
+          <hr className="my-4 border-gray-700" />
 
           <nav>
             <ul className="space-y-2">
