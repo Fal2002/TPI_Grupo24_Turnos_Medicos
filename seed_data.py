@@ -27,7 +27,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def clear_database(db: Session):
     """Limpia todas las tablas de la base de datos"""
     print("🗑️  Limpiando base de datos...")
-    
+
     # Orden importante para respetar las FK
     db.query(Turno).delete()
     db.query(AgendaRegular).delete()
@@ -40,7 +40,7 @@ def clear_database(db: Session):
     db.query(Especialidad).delete()
     db.query(Consultorio).delete()
     db.query(Sucursal).delete()
-    
+
     db.commit()
     print("✅ Base de datos limpiada")
 
@@ -48,14 +48,14 @@ def clear_database(db: Session):
 def seed_roles(db: Session):
     """Crea los roles del sistema"""
     print("👥 Creando roles...")
-    
+
     roles = [
         Role(Id=1, Nombre="Admin"),
         Role(Id=2, Nombre="Medico"),
         Role(Id=3, Nombre="Paciente"),
         Role(Id=4, Nombre="Secretaria"),
     ]
-    
+
     db.add_all(roles)
     db.commit()
     print(f"✅ {len(roles)} roles creados")
@@ -64,7 +64,7 @@ def seed_roles(db: Session):
 def seed_estados(db: Session):
     """Crea los estados de los turnos"""
     print("📊 Creando estados...")
-    
+
     estados = [
         Estado(Id=1, Descripcion="Pendiente"),
         Estado(Id=2, Descripcion="Confirmado"),
@@ -74,7 +74,7 @@ def seed_estados(db: Session):
         Estado(Id=6, Descripcion="Ausente"),
         Estado(Id=7, Descripcion="Anunciado"),
     ]
-    
+
     db.add_all(estados)
     db.commit()
     print(f"✅ {len(estados)} estados creados")
@@ -83,14 +83,14 @@ def seed_estados(db: Session):
 def seed_sucursales(db: Session):
     """Crea sucursales"""
     print("🏥 Creando sucursales...")
-    
+
     sucursales = [
         Sucursal(Id=1, Nombre="Sede Central", Direccion="Av. Libertador 1000, CABA"),
         Sucursal(Id=2, Nombre="Sede Norte", Direccion="Av. Cabildo 2500, CABA"),
         Sucursal(Id=3, Nombre="Sede Sur", Direccion="Av. Rivadavia 5000, CABA"),
         Sucursal(Id=4, Nombre="Sede Oeste", Direccion="Av. Gaona 3000, CABA"),
     ]
-    
+
     db.add_all(sucursales)
     db.commit()
     print(f"✅ {len(sucursales)} sucursales creadas")
@@ -99,16 +99,14 @@ def seed_sucursales(db: Session):
 def seed_consultorios(db: Session):
     """Crea consultorios para cada sucursal"""
     print("🚪 Creando consultorios...")
-    
+
     consultorios = []
-    
+
     # 5 consultorios por sucursal
     for sucursal_id in range(1, 5):
         for numero in range(1, 6):
-            consultorios.append(
-                Consultorio(Numero=numero, Sucursal_Id=sucursal_id)
-            )
-    
+            consultorios.append(Consultorio(Numero=numero, Sucursal_Id=sucursal_id))
+
     db.add_all(consultorios)
     db.commit()
     print(f"✅ {len(consultorios)} consultorios creados")
@@ -117,7 +115,7 @@ def seed_consultorios(db: Session):
 def seed_especialidades(db: Session):
     """Crea especialidades médicas"""
     print("⚕️  Creando especialidades...")
-    
+
     especialidades = [
         Especialidad(Id_especialidad=1, descripcion="Cardiología"),
         Especialidad(Id_especialidad=2, descripcion="Dermatología"),
@@ -130,7 +128,7 @@ def seed_especialidades(db: Session):
         Especialidad(Id_especialidad=9, descripcion="Odontología"),
         Especialidad(Id_especialidad=10, descripcion="Clínica Médica"),
     ]
-    
+
     db.add_all(especialidades)
     db.commit()
     print(f"✅ {len(especialidades)} especialidades creadas")
@@ -139,7 +137,7 @@ def seed_especialidades(db: Session):
 def seed_users_and_medicos(db: Session):
     """Crea usuarios médicos y sus perfiles"""
     print("👨‍⚕️ Creando médicos y usuarios...")
-    
+
     medicos_data = [
         {
             "matricula": "M-12345",
@@ -212,10 +210,10 @@ def seed_users_and_medicos(db: Session):
             "especialidades": [10],  # Clínica Médica
         },
     ]
-    
+
     medicos = []
     medico_especialidades = []
-    
+
     for i, data in enumerate(medicos_data, start=1):
         # Crear usuario
         user = User(
@@ -225,7 +223,7 @@ def seed_users_and_medicos(db: Session):
         )
         db.add(user)
         db.flush()  # Para obtener el User_Id
-        
+
         # Crear médico
         medico = Medico(
             Matricula=data["matricula"],
@@ -234,7 +232,7 @@ def seed_users_and_medicos(db: Session):
             User_Id=user.Id,
         )
         medicos.append(medico)
-        
+
         # Asociar especialidades
         for esp_id in data["especialidades"]:
             medico_especialidades.append(
@@ -243,7 +241,7 @@ def seed_users_and_medicos(db: Session):
                     Especialidad_Id=esp_id,
                 )
             )
-    
+
     db.add_all(medicos)
     db.add_all(medico_especialidades)
     db.commit()
@@ -253,7 +251,7 @@ def seed_users_and_medicos(db: Session):
 def seed_users_and_pacientes(db: Session):
     """Crea usuarios pacientes y sus perfiles"""
     print("👤 Creando pacientes y usuarios...")
-    
+
     pacientes_data = [
         {
             "nombre": "Pedro",
@@ -345,10 +343,16 @@ def seed_users_and_pacientes(db: Session):
             "telefono": "11-6789-0124",
             "email": "tomas.medina@email.com",
         },
+        {
+            "nombre": "Francisco",
+            "apellido": "Jalile",
+            "telefono": "11-7890-1235",
+            "email": "francisco2004jalile@gmail.com",
+        },
     ]
-    
+
     pacientes = []
-    
+
     for data in pacientes_data:
         # Crear usuario
         user = User(
@@ -358,7 +362,7 @@ def seed_users_and_pacientes(db: Session):
         )
         db.add(user)
         db.flush()
-        
+
         # Crear paciente
         paciente = Paciente(
             Nombre=data["nombre"],
@@ -368,7 +372,7 @@ def seed_users_and_pacientes(db: Session):
             User_Id=user.Id,
         )
         pacientes.append(paciente)
-    
+
     db.add_all(pacientes)
     db.commit()
     print(f"✅ {len(pacientes)} pacientes creados con sus usuarios")
@@ -377,18 +381,20 @@ def seed_users_and_pacientes(db: Session):
 def seed_agendas_regulares(db: Session):
     """Crea agendas regulares para los médicos"""
     print("📅 Creando agendas regulares...")
-    
+
     # Obtener todos los médicos
     medicos = db.query(Medico).all()
-    
+
     agendas = []
-    
+
     for medico in medicos:
         # Obtener especialidades del médico
-        especialidades = db.query(MedicoEspecialidad).filter(
-            MedicoEspecialidad.Medico_Matricula == medico.Matricula
-        ).all()
-        
+        especialidades = (
+            db.query(MedicoEspecialidad)
+            .filter(MedicoEspecialidad.Medico_Matricula == medico.Matricula)
+            .all()
+        )
+
         for esp in especialidades:
             # Lunes a Viernes (1-5)
             for dia in range(1, 6):
@@ -404,7 +410,7 @@ def seed_agendas_regulares(db: Session):
                         Sucursal_Id=(dia % 4) + 1,  # Rotar entre sucursales
                     )
                 )
-                
+
                 # Turno tarde: 14:00 - 18:00
                 agendas.append(
                     AgendaRegular(
@@ -417,7 +423,7 @@ def seed_agendas_regulares(db: Session):
                         Sucursal_Id=(dia % 4) + 1,
                     )
                 )
-    
+
     db.add_all(agendas)
     db.commit()
     print(f"✅ {len(agendas)} agendas regulares creadas")
@@ -426,35 +432,37 @@ def seed_agendas_regulares(db: Session):
 def seed_turnos(db: Session):
     """Crea turnos de ejemplo"""
     print("🗓️  Creando turnos...")
-    
+
     # Obtener datos necesarios
     pacientes = db.query(Paciente).all()
     medicos = db.query(Medico).all()
     estados = db.query(Estado).all()
-    
+
     turnos = []
-    
+
     # Crear turnos para los próximos 7 días
     fecha_base = datetime.now()
-    
+
     for i in range(30):  # 30 turnos de ejemplo
         fecha = fecha_base + timedelta(days=(i % 7))
         fecha_str = fecha.strftime("%Y-%m-%d")
-        
+
         # Horas de ejemplo
         horas = ["08:00", "09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"]
         hora = horas[i % len(horas)]
-        
+
         paciente = pacientes[i % len(pacientes)]
         medico = medicos[i % len(medicos)]
-        
+
         # Obtener una especialidad del médico
-        medico_esp = db.query(MedicoEspecialidad).filter(
-            MedicoEspecialidad.Medico_Matricula == medico.Matricula
-        ).first()
-        
+        medico_esp = (
+            db.query(MedicoEspecialidad)
+            .filter(MedicoEspecialidad.Medico_Matricula == medico.Matricula)
+            .first()
+        )
+
         estado = estados[i % len(estados)]
-        
+
         turno = Turno(
             Fecha=fecha_str,
             Hora=hora,
@@ -466,9 +474,9 @@ def seed_turnos(db: Session):
             Duracion=30,
             Motivo=f"Consulta {i + 1}",
         )
-        
+
         turnos.append(turno)
-    
+
     db.add_all(turnos)
     db.commit()
     print(f"✅ {len(turnos)} turnos creados")
@@ -477,13 +485,13 @@ def seed_turnos(db: Session):
 def seed_admin_user(db: Session):
     """Crea un usuario administrador"""
     print("👑 Creando usuario administrador...")
-    
+
     admin = User(
         Email="admin@hospital.com",
         Password_Hash=pwd_context.hash("admin123"),
         Role_Id=1,  # Rol Admin
     )
-    
+
     db.add(admin)
     db.commit()
     print("✅ Usuario administrador creado (admin@hospital.com / admin123)")
@@ -491,20 +499,20 @@ def seed_admin_user(db: Session):
 
 def main():
     """Función principal"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🌱 INICIANDO SEED DE BASE DE DATOS")
-    print("="*60 + "\n")
-    
+    print("=" * 60 + "\n")
+
     # Crear las tablas si no existen
     Base.metadata.create_all(bind=engine)
-    
+
     # Crear sesión
     db = SessionLocal()
-    
+
     try:
         # Limpiar base de datos (CUIDADO: Esto borra todos los datos)
         clear_database(db)
-        
+
         # Insertar datos
         seed_roles(db)
         seed_estados(db)
@@ -516,10 +524,10 @@ def main():
         seed_agendas_regulares(db)
         seed_turnos(db)
         seed_admin_user(db)
-        
-        print("\n" + "="*60)
+
+        print("\n" + "=" * 60)
         print("✅ SEED COMPLETADO EXITOSAMENTE")
-        print("="*60)
+        print("=" * 60)
         print("\n📋 CREDENCIALES DE ACCESO:")
         print("-" * 60)
         print("👑 Admin:")
@@ -533,8 +541,8 @@ def main():
         print("   pedro.gomez@email.com")
         print("   sofia.lopez@email.com")
         print("   ... y más")
-        print("="*60 + "\n")
-        
+        print("=" * 60 + "\n")
+
     except Exception as e:
         print(f"❌ Error durante el seed: {e}")
         db.rollback()

@@ -169,18 +169,22 @@ class AgendaExcepcional(Base):
 
 class Turno(Base):
     __tablename__ = "Turnos"
+
     Fecha = Column(Text, primary_key=True)
     Hora = Column(Text, primary_key=True)
+
     Paciente_nroPaciente = Column(
         Integer,
         ForeignKey("Pacientes.nroPaciente", ondelete="CASCADE", onupdate="CASCADE"),
         primary_key=True,
     )
+
     Medico_Matricula = Column(
         String,
         ForeignKey("Medicos.Matricula", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
     )
+
     Especialidad_Id = Column(
         Integer,
         ForeignKey(
@@ -188,49 +192,26 @@ class Turno(Base):
         ),
         nullable=False,
     )
+
     Estado_Id = Column(
         Integer,
         ForeignKey("Estados.Id", ondelete="SET NULL", onupdate="CASCADE"),
         nullable=True,
     )
+
     Sucursal_Id = Column(
         Integer,
         ForeignKey("Sucursales.Id", ondelete="SET NULL", onupdate="CASCADE"),
         nullable=True,
     )
+
     Duracion = Column(Integer)
     Motivo = Column(Text)
     Diagnostico = Column(Text)
 
     estado_rel = relationship("Estado")
-    Paciente = relationship("Paciente")
-    Medico = relationship("Medico")
-
-    # PROPIEDAD PARA OBTENER EL NOMBRE DEL ESTADO (Texto)
-    @property
-    def estado(self):
-        return self.estado_rel.Descripcion if self.estado_rel else None
-
-    def get_state(self, db):
-        estado = db.query(Estado).filter(Estado.Id == self.Estado_Id).first()
-        if not estado:
-            raise Exception("Estado inválido")
-
-        mapping = {
-            "Pendiente": PendienteState,
-            "Confirmado": ConfirmadoState,
-            "Cancelado": CanceladoState,
-            "Atendido": AtendidoState,
-            "Finalizado": FinalizadoState,
-            "Ausente": AusenteState,
-            "Anunciado": AnunciadoState,
-        }
-
-        cls = mapping.get(estado.Descripcion)
-        if not cls:
-            raise Exception(f"Estado desconocido: {estado.Descripcion}")
-
-        return cls(self, db)
+    paciente = relationship("Paciente", back_populates="turnos")
+    medico = relationship("Medico")
 
 
 class Receta(Base):
