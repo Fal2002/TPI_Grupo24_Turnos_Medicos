@@ -37,7 +37,7 @@ export default function NuevoPacientePage() {
     setError(null);
 
     // Validación simple de todos los campos
-    if (!formData.numero || !formData.nombre || !formData.apellido || !formData.email || !formData.telefono) {
+    if (!formData.nombre || !formData.apellido || !formData.email || !formData.telefono) {
       setError('Por favor completa todos los campos obligatorios.');
       setLoading(false);
       return;
@@ -105,26 +105,6 @@ export default function NuevoPacientePage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Campo: Número de Paciente */}
-            <div className="md:col-span-2">
-              <label htmlFor="numero" className="block text-sm font-medium text-gray-700 mb-1">
-                Número de Paciente / ID
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  id="numero"
-                  name="numero"
-                  value={formData.numero}
-                  onChange={handleChange}
-                  placeholder="Ej: 1001"
-                  className=" text-gray-700 w-full pl-4 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  required
-                />
-              </div>
-              <p className="mt-1 text-xs text-gray-500">Identificador único del paciente en el sistema.</p>
-            </div>
 
             {/* Campo: Nombre */}
             <div>

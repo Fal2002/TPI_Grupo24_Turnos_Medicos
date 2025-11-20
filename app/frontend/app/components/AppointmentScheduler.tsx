@@ -38,6 +38,18 @@ export default function AppointmentScheduler({ patientId }: AppointmentScheduler
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingTimes, setLoadingTimes] = useState(false);
 
+  // --- MODIFICACIÓN 1: Obtener la fecha actual en formato YYYY-MM-DD para el atributo 'min' ---
+  const getTodayString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  
+  const minDate = getTodayString();
+  // ----------------------------------------------------------------------------------------
+
   useEffect(() => {
     getEspecialidades().then((data) => setSpecialties(data));
     getMedicos().then((data) => setDoctors(data));
@@ -55,24 +67,42 @@ export default function AppointmentScheduler({ patientId }: AppointmentScheduler
 
   // Fetch available times when date or doctor changes
   useEffect(() => {
-  if (selectedDoctor && selectedDate) {
-    setLoadingTimes(true);
-    getAgendaDisponible(selectedDoctor, selectedDate)
-      .then((data) => {
-        const times = [...new Set(data.map((item: any) => String(item.hora)))] as string[];
-setAvailableTimes(times);
+    if (selectedDoctor && selectedDate) {
+      setLoadingTimes(true);
+      getAgendaDisponible(selectedDoctor, selectedDate)
+        .then((data) => {
+          let times = [...new Set(data.map((item: any) => String(item.hora)))] as string[];
+          
+          // --- MODIFICACIÓN 2: Filtrar horarios si la fecha seleccionada es hoy ---
+          const todayStr = getTodayString();
+          
+          if (selectedDate === todayStr) {
+            const now = new Date();
+            const currentHours = now.getHours();
+            const currentMinutes = now.getMinutes();
 
-      })
-      .catch((err) => {
-        console.error("Error fetching agenda:", err);
-        setAvailableTimes([]);
-      })
-      .finally(() => setLoadingTimes(false));
-  } else {
-    setAvailableTimes([]);
-  }
-}, [selectedDoctor, selectedDate]);
+            times = times.filter((time) => {
+              const [h, m] = time.split(':').map(Number);
+              // Si la hora del turno es mayor a la actual, pasa.
+              if (h > currentHours) return true;
+              // Si la hora es igual, verificamos los minutos.
+              if (h === currentHours && m > currentMinutes) return true;
+              return false;
+            });
+          }
+          // -----------------------------------------------------------------------
 
+          setAvailableTimes(times);
+        })
+        .catch((err) => {
+          console.error("Error fetching agenda:", err);
+          setAvailableTimes([]);
+        })
+        .finally(() => setLoadingTimes(false));
+    } else {
+      setAvailableTimes([]);
+    }
+  }, [selectedDoctor, selectedDate]);
 
   const filteredDoctors = doctors;
 
@@ -88,9 +118,6 @@ setAvailableTimes(times);
     const selectedDoctorInfo = doctors.find(d => d.Matricula === selectedDoctor);
     if (!selectedDoctorInfo) return;
 
-    // Find specialty ID (assuming the doctor has the selected specialty or we use the first one if not filtered)
-    // Ideally we should know which specialty ID is being booked.
-    // For now, let's pick the first specialty of the doctor or the one matching the filter.
     let specialtyId = selectedDoctorInfo.especialidades[0]?.Id_especialidad;
     if (selectedSpecialty) {
       const spec = selectedDoctorInfo.especialidades.find(s => s.descripcion === selectedSpecialty);
@@ -103,16 +130,14 @@ setAvailableTimes(times);
       Paciente_nroPaciente: patientId,
       Medico_Matricula: selectedDoctor,
       Especialidad_Id: specialtyId,
-      // Sucursal_Id: ... (we might need to get this from agenda available info if needed, but backend might infer or it's optional)
       Motivo: "Turno web",
-      Duracion: 30 // Default or from agenda
+      Duracion: 30 
     };
 
     try {
       await createTurno(turnoData);
       alert(`¡Turno confirmado con ${selectedDoctorInfo?.Nombre} ${selectedDoctorInfo?.Apellido} para el ${selectedDate} a las ${selectedTime}!`);
-      // Reset or redirect
-      router.push('/portal'); // Redirect to portal home
+      router.push('/portal'); 
     } catch (error: any) {
       alert(`Error al agendar turno: ${error.message}`);
     } finally {
@@ -158,7 +183,14 @@ setAvailableTimes(times);
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
-              <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md" />
+              {/* --- MODIFICACIÓN 3: Agregar atributo min --- */}
+              <input 
+                type="date" 
+                min={minDate} 
+                value={selectedDate} 
+                onChange={e => setSelectedDate(e.target.value)} 
+                className="w-full p-2 border border-gray-300 rounded-md" 
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Horarios Disponibles</label>
