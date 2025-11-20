@@ -212,11 +212,24 @@ class Turno(Base):
     estado_rel = relationship("Estado")
     paciente = relationship("Paciente")
     medico = relationship("Medico")
+    especialidad = relationship("Especialidad")
 
     # PROPIEDAD PARA OBTENER EL NOMBRE DEL ESTADO (Texto)
     @property
     def estado(self):
         return self.estado_rel.Descripcion if self.estado_rel else None
+
+    @property
+    def medico_nombre(self):
+        return self.medico.Nombre if self.medico else None
+
+    @property
+    def medico_apellido(self):
+        return self.medico.Apellido if self.medico else None
+
+    @property
+    def especialidad_descripcion(self):
+        return self.especialidad.descripcion if self.especialidad else None
 
     def get_state(self, db):
         estado = db.query(Estado).filter(Estado.Id == self.Estado_Id).first()

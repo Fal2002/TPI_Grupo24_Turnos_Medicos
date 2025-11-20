@@ -60,10 +60,10 @@ class NotificationService:
         print(f"\n⏳ Encontrados {len(tomorrow_turnos)} turnos para MAÑANA ({tomorrow}).")
         
         for turno in tomorrow_turnos:
-            if turno.Paciente and turno.Paciente.Email:
+            if turno.paciente and turno.paciente.Email:
                 subject = f"Recordatorio: Tu turno médico es MAÑANA a las {turno.Hora}."
-                body = f"Hola {turno.Paciente.Nombre} {turno.Paciente.Apellido}, nos comunicamos desde la clínica para recordarte que no olvides tu turno del día {tomorrow.strftime('%Y-%m-%d')} a la hora {turno.Hora} con una duración de {turno.Duracion} minutos.\nSerá atendido por el/la Dr/a. {turno.Medico.Nombre} {turno.Medico.Apellido}. \nTe esperamos.\n\nSaludos cordiales."
-                self._send_email_real(turno.Paciente.Email, subject, body)
+                body = f"Hola {turno.paciente.Nombre} {turno.paciente.Apellido}, nos comunicamos desde la clínica para recordarte que no olvides tu turno del día {tomorrow.strftime('%Y-%m-%d')} a la hora {turno.Hora} con una duración de {turno.Duracion} minutos.\nSerá atendido por el/la Dr/a. {turno.medico.Nombre} {turno.medico.Apellido}. \nTe esperamos.\n\nSaludos cordiales."
+                self._send_email_real(turno.paciente.Email, subject, body)
 
 
         # ----------------------------------------------------
@@ -83,9 +83,9 @@ class NotificationService:
         print(f"\n🔔 Encontrados {len(today_turnos_cerca)} turnos entre {target_time_start.strftime('%H:%M')} y {target_time_end.strftime('%H:%M')}.")
 
         for turno in today_turnos_cerca:
-            if turno.Paciente and turno.Paciente.Email:
+            if turno.paciente and turno.paciente.Email:
                 subject = f"Aviso: Tu turno médico es hoy a las {turno.Hora} "
-                body = f"Hola {turno.Paciente.Nombre} {turno.Paciente.Apellido}, nos comunicamos desde la clínica para recordarte que tu turno con el/la Dr/a. {turno.Medico.Nombre} {turno.Medico.Apellido} es HOY a las {turno.Hora}. Por favor, no llegues tarde. \n\nSaludos cordiales."
-                self._send_email_real(turno.Paciente.Email, subject, body)
+                body = f"Hola {turno.paciente.Nombre} {turno.paciente.Apellido}, nos comunicamos desde la clínica para recordarte que tu turno con el/la Dr/a. {turno.medico.Nombre} {turno.medico.Apellido} es HOY a las {turno.Hora}. Por favor, no llegues tarde. \n\nSaludos cordiales."
+                self._send_email_real(turno.paciente.Email, subject, body)
 
         print("\n--- Proceso de notificaciones finalizado ---")

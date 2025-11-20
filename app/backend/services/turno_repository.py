@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import date, time
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_
 from sqlalchemy.exc import IntegrityError
@@ -215,8 +216,8 @@ class TurnoRepository:
             self.db.query(Turno)
             .filter(Turno.Fecha == target_date_str, Turno.Estado_Id.in_([1, 2]))
             .options(
-                joinedload(Turno.Paciente),
-                joinedload(Turno.Medico),  # Cargar datos del médico
+                joinedload(Turno.paciente),
+                joinedload(Turno.medico),  # Cargar datos del médico
             )
             .all()
         )
@@ -239,7 +240,7 @@ class TurnoRepository:
                 Turno.Hora >= start_time_str,
                 Turno.Hora <= end_time_str,
             )
-            .options(joinedload(Turno.Paciente), joinedload(Turno.Medico))
+            .options(joinedload(Turno.paciente), joinedload(Turno.medico))
             .all()
         )
 

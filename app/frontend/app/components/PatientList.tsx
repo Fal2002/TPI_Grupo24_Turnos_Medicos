@@ -109,14 +109,17 @@ export default function PatientList({ activeSpecialty }: { activeSpecialty: stri
                   </p>
                 </div>
                 <div className="mt-3 sm:mt-0 text-left sm:text-right">
+                {/*
                    <p className="text-sm text-gray-600 flex items-center sm:justify-end gap-2">
                      <HeartPulse size={16} />
                      Última visita: {formatDate(patient.lastVisit)}
                    </p>
+                   */}
                    <p className="text-sm text-gray-600 flex items-center sm:justify-end gap-2 mt-1">
                      <Calendar size={16} />
                      Próximo turno: {formatDate(patient.nextAppointment)}
                    </p>
+                
                 </div>
               </div>
             </Link>
