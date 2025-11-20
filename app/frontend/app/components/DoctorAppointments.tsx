@@ -4,6 +4,25 @@
 
 import { useState, useEffect, useMemo, FormEvent } from 'react';
 import { Calendar, Clock, User, Edit, Trash2, Check, Play, Plus, X, Pill, Eye, FileText } from 'lucide-react';
+import { useMedico } from '../contexts/MedicoContext'; // Ajusta la ruta a tu contexto
+import { getTurnosPorMedico, cambiarEstadoTurno, actualizarTurno } from '@/services/turnos'; // Ajusta la ruta a tu servicio
+import { getPacienteByNumero } from '@/services/pacientes';
+import { obtenerRecetasPorTurno, crearReceta, eliminarReceta, agregarMedicamentoAReceta, obtenerMedicamentosDeReceta, RecetaOut } from '@/services/recetas';
+import { obtenerMedicamentos, MedicamentoOut } from '@/services/medicamentos';
+
+interface Turno {
+  Fecha: string;
+  Hora: string;
+  Motivo: string | null;
+  Diagnostico: string | null;
+  estado: 'Confirmado' | 'Pendiente' | 'Atendido' | 'Finalizado' | 'Cancelado' | 'Ausente'; // Cambiado de Estado a estado
+  Paciente_nroPaciente: number;
+  paciente_nombre?: string;
+  paciente_apellido?: string;
+  Especialidad_Id: number;
+  especialidad_descripcion: string;
+  Medico_Matricula: string;
+}
 
 // --- Tipos de Datos Expandidos ---
 type Prescription = { id: number; medicine: string; quantity: number };
@@ -13,7 +32,7 @@ type Appointment = {
   specialty: string;
   dateTime: string;
   reason: string; // 1. Añadimos el motivo
-  status: 'Confirmado' | 'Pendiente' | 'Atendiendo' | 'Finalizado' | 'Cancelado' | 'Ausente';
+  status: 'Confirmado' | 'Pendiente' | 'Atendido' | 'Finalizado' | 'Cancelado' | 'Ausente';
   diagnosis: string;
   prescriptions: Prescription[];
 };
@@ -30,90 +49,312 @@ const mockMedicines = ['Paracetamol 500mg', 'Ibuprofeno 400mg', 'Amoxicilina 875
 
 const statusStyles: Record<Appointment['status'], string> = {
   Confirmado: 'border-blue-500', Pendiente: 'border-yellow-500',
-  Atendiendo: 'border-teal-500 animate-pulse', Finalizado: 'border-green-500',
+  Atendido: 'border-teal-500 animate-pulse', Finalizado: 'border-green-500',
   Cancelado: 'border-gray-400 opacity-60',
     Ausente: 'border-red-500 opacity-60',
 };
 
 // --- Componente Principal ---
-export default function DoctorAppointments({ activeSpecialty }: { activeSpecialty: string }) {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+export default function DoctorAppointments() {
+  const { medico, activeSpecialty } = useMedico();
+
+  const [turnos, setTurnos] = useState<Turno[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [modal, setModal] = useState<'edit' | 'Cancelado' | 'Atendiendo' | 'Finalizado' | 'prescriptions' | null>(null);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [modal, setModal] = useState<'Cancelado' | 'Atendido' | 'Finalizado' | 'prescriptions' | 'edit' | null>(null);
+  const [selectedTurno, setSelectedTurno] = useState<Turno | null>(null);
+  
+  // --- Estado para Recetas y Medicamentos ---
+  const [recetas, setRecetas] = useState<(RecetaOut & { medicamentos: MedicamentoOut[] })[]>([]);
+  const [availableMedicamentos, setAvailableMedicamentos] = useState<MedicamentoOut[]>([]);
+  const [selectedMedicamentoId, setSelectedMedicamentoId] = useState<number | ''>('');
+  const [cantidad, setCantidad] = useState<string>(''); // Solo visual por ahora
 
   useEffect(() => {
-    setTimeout(() => { setAppointments(mockAppointments); setIsLoading(false); }, 500);
-  }, []);
+    const fetchTurnos = async () => {
+      if (!medico) return; // Si no hay médico logueado, no hacer nada
 
-  const filteredAppointments = useMemo(() => {
-    return appointments
-      .filter(app => app.specialty === activeSpecialty)
-      .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
-  }, [appointments, activeSpecialty]);
+      setIsLoading(true);
+      try {
+        const data = await getTurnosPorMedico(medico.Matricula);
+        
+        // Enriquecer los turnos con los datos del paciente
+        const turnosConPacientes = await Promise.all(data.map(async (turno: Turno) => {
+          try {
+            const paciente = await getPacienteByNumero(turno.Paciente_nroPaciente);
+            return {
+              ...turno,
+              paciente_nombre: paciente.Nombre,
+              paciente_apellido: paciente.Apellido
+            };
+          } catch (error) {
+            console.error(`Error al cargar paciente ${turno.Paciente_nroPaciente}:`, error);
+            return {
+              ...turno,
+              paciente_nombre: 'Desconocido',
+              paciente_apellido: ''
+            };
+          }
+        }));
+
+        setTurnos(turnosConPacientes);
+      } catch (error) {
+        console.error("Error al cargar los turnos:", error);
+        alert("No se pudieron cargar los turnos.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchTurnos();
+  }, [medico]); // Se vuelve a ejecutar si cambia el médico (aunque no debería pasar en la misma sesión)
+
+  const filteredTurnos = useMemo(() => {
+    if (!activeSpecialty) return [];
+    return turnos
+      .filter(turno => turno.Especialidad_Id === activeSpecialty.Id_especialidad)
+      .sort((a, b) => new Date(`${a.Fecha}T${a.Hora}`).getTime() - new Date(`${b.Fecha}T${b.Hora}`).getTime());
+  }, [turnos, activeSpecialty]);
   
   // --- Manejadores de Estado y Acciones ---
-  const handleOpenModal = (type: typeof modal, appointment: Appointment) => {
-    setSelectedAppointment({ ...appointment });
+  const handleOpenModal = (type: typeof modal, turno: Turno) => {
+    setSelectedTurno(turno);
     setModal(type);
   };
   
   const handleCloseModals = () => setModal(null);
   
-  const handleStatusChange = (newStatus: Appointment['status']) => {
-    if (!selectedAppointment) return;
-    setAppointments(prev => prev.map(app => app.id === selectedAppointment.id ? { ...app, status: newStatus } : app));
-    handleCloseModals();
+  const handleStatusChange = async (newStatus: Turno['estado']) => {
+    if (!selectedTurno) return;
+
+    const pkData = {
+      fecha: selectedTurno.Fecha,
+      hora: selectedTurno.Hora,
+      paciente_nro: selectedTurno.Paciente_nroPaciente,
+    };
+
+    // Mapeo de estados del frontend a acciones del backend
+    const actionMap: Record<string, string> = {
+      'Cancelado': 'cancelar',
+      'Atendido': 'atender',
+      'Finalizado': 'finalizar',
+      'Confirmado': 'confirmar',
+      'Ausente': 'marcarAusente',
+      // 'reprogramar' y 'anunciar' no están en la UI actual pero podrían agregarse
+    };
+
+    const accion = actionMap[newStatus];
+
+    if (!accion) {
+      alert(`Estado no soportado: ${newStatus}`);
+      return;
+    }
+
+    try {
+      await cambiarEstadoTurno(pkData, accion);
+      // Actualizamos el estado local para reflejar el cambio en la UI instantáneamente
+      setTurnos(prev => 
+        prev.map(turno => 
+          (turno.Fecha === selectedTurno.Fecha && turno.Hora === selectedTurno.Hora && turno.Paciente_nroPaciente === selectedTurno.Paciente_nroPaciente) 
+          ? { ...turno, estado: newStatus } 
+          : turno
+        )
+      );
+      alert(`Turno actualizado a: ${newStatus}`);
+    } catch (error) {
+      console.error("Error al cambiar el estado del turno:", error);
+      alert(`No se pudo actualizar el turno: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    } finally {
+      handleCloseModals();
+    }
   };
   
-  const handleSaveChanges = (e: FormEvent) => {
+  const handleSaveChanges = async (e: FormEvent) => {
     e.preventDefault();
-    if (!selectedAppointment) return;
-    setAppointments(prev => prev.map(app => app.id === selectedAppointment.id ? selectedAppointment : app));
-    handleCloseModals();
+    if (!selectedTurno) return;
+
+    const formData = new FormData(e.target as HTMLFormElement);
+    const fechaHora = formData.get('fechaHora') as string;
+    const motivo = formData.get('motivo') as string;
+    const diagnostico = formData.get('diagnostico') as string;
+
+    // Parse fechaHora "YYYY-MM-DDTHH:mm"
+    const [fecha, hora] = fechaHora.split('T');
+
+    const pkData = {
+      fecha: selectedTurno.Fecha,
+      hora: selectedTurno.Hora,
+      paciente_nro: selectedTurno.Paciente_nroPaciente,
+    };
+
+    const nuevosDatos: any = {};
+    if (fecha !== selectedTurno.Fecha) nuevosDatos.Fecha = fecha;
+    if (hora !== selectedTurno.Hora) nuevosDatos.Hora = hora;
+    if (motivo !== (selectedTurno.Motivo || '')) nuevosDatos.Motivo = motivo;
+    if (diagnostico !== (selectedTurno.Diagnostico || '')) nuevosDatos.Diagnostico = diagnostico;
+
+    if (Object.keys(nuevosDatos).length === 0) {
+        handleCloseModals();
+        return;
+    }
+
+    try {
+      await actualizarTurno(pkData, nuevosDatos);
+      
+      setTurnos(prev => prev.map(t => {
+        if (t.Fecha === selectedTurno.Fecha && t.Hora === selectedTurno.Hora && t.Paciente_nroPaciente === selectedTurno.Paciente_nroPaciente) {
+            return { 
+                ...t, 
+                Fecha: nuevosDatos.Fecha || t.Fecha,
+                Hora: nuevosDatos.Hora || t.Hora,
+                Motivo: nuevosDatos.Motivo !== undefined ? nuevosDatos.Motivo : t.Motivo,
+                Diagnostico: nuevosDatos.Diagnostico !== undefined ? nuevosDatos.Diagnostico : t.Diagnostico
+            };
+        }
+        return t;
+      }));
+      alert('Turno actualizado correctamente');
+      handleCloseModals();
+    } catch (error) {
+      console.error("Error al actualizar turno:", error);
+      alert(`Error al actualizar turno: ${error instanceof Error ? error.message : 'Desconocido'}`);
+    }
   };
 
-  const handleAddPrescription = (medicine: string, quantity: number) => {
-    if (!selectedAppointment || !medicine || quantity <= 0) return;
-    const newPrescription: Prescription = { id: Date.now(), medicine, quantity };
-    setSelectedAppointment(prev => prev ? { ...prev, prescriptions: [...prev.prescriptions, newPrescription] } : null);
+  // Cargar recetas y medicamentos al abrir el modal
+  useEffect(() => {
+    if (modal === 'prescriptions' && selectedTurno) {
+      // 1. Cargar Medicamentos Disponibles
+      obtenerMedicamentos()
+        .then(setAvailableMedicamentos)
+        .catch(err => console.error("Error cargando medicamentos:", err));
+
+      // 2. Cargar Recetas del Turno
+      obtenerRecetasPorTurno(selectedTurno.Fecha, selectedTurno.Hora, selectedTurno.Paciente_nroPaciente)
+        .then(async (recetasData) => {
+            // 3. Para cada receta, cargar sus medicamentos
+            const recetasCompletas = await Promise.all(recetasData.map(async (r: { Id: number; }) => {
+                try {
+                    const meds = await obtenerMedicamentosDeReceta(r.Id);
+                    return { ...r, medicamentos: meds };
+                } catch (e) {
+                    console.error(`Error cargando medicamentos para receta ${r.Id}`, e);
+                    return { ...r, medicamentos: [] };
+                }
+            }));
+            setRecetas(recetasCompletas);
+        })
+        .catch(err => console.error("Error cargando recetas:", err));
+    }
+  }, [modal, selectedTurno]);
+
+  const handleCreateReceta = async () => {
+    if (!selectedTurno) return;
+    try {
+      const nueva = await crearReceta({
+        Turno_Fecha: selectedTurno.Fecha,
+        Turno_Hora: selectedTurno.Hora,
+        Turno_Paciente_nroPaciente: selectedTurno.Paciente_nroPaciente
+      });
+      // La nueva receta empieza sin medicamentos
+      setRecetas([...recetas, { ...nueva, medicamentos: [] }]);
+    } catch (error) {
+      console.error(error);
+      alert("Error al crear receta");
+    }
   };
 
-  const isAtendiendo = (status: Appointment['status']) => status === 'Atendiendo';
+  const handleAddMedicamento = async (recetaId: number) => {
+    if (!selectedMedicamentoId) {
+        alert("Seleccione un medicamento");
+        return;
+    }
+    try {
+        await agregarMedicamentoAReceta(recetaId, Number(selectedMedicamentoId));
+        
+        // Actualizar estado local
+        const medToAdd = availableMedicamentos.find(m => m.Id === Number(selectedMedicamentoId));
+        if (medToAdd) {
+            setRecetas(prev => prev.map(r => {
+                if (r.Id === recetaId) {
+                    return { ...r, medicamentos: [...r.medicamentos, medToAdd] };
+                }
+                return r;
+            }));
+        }
+        setSelectedMedicamentoId('');
+        setCantidad('');
+    } catch (error) {
+        console.error(error);
+        alert("Error al agregar medicamento");
+    }
+  };
+
+  const handleDeleteReceta = async (id: number) => {
+    if (!confirm("¿Seguro que desea eliminar esta receta?")) return;
+    try {
+      await eliminarReceta(id);
+      setRecetas(recetas.filter(r => r.Id !== id));
+    } catch (error) {
+      console.error(error);
+      alert("Error al eliminar receta");
+    }
+  };
+  
+  const isAtendiendo = (status: Appointment['status']) => status === 'Atendido';
   const isFinalizado = (status: Appointment['status']) => status === 'Finalizado';
   const isCancelado = (status: Appointment['status']) => status === 'Cancelado';
   
-  const isPastAppointment = (dateTime: string) =>{
-   if ((new Date(dateTime) < new Date()) )return true;
-   return false;
+  const isPastAppointment = (fecha: string, hora: string) => {
+    const appointmentDate = new Date(`${fecha}T${hora}`);
+    return appointmentDate < new Date();
   };
-  const formatDateTime = (iso: string) => new Intl.DateTimeFormat('es-ES', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(iso));
+
+  const formatDateTime = (fecha: string, hora: string) => 
+    new Intl.DateTimeFormat('es-ES', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(`${fecha}T${hora}`));
 
   if (isLoading) return <div>Cargando turnos...</div>;
 
   return (
     <div className="space-y-6">
-      {filteredAppointments.length > 0 ? (
-        filteredAppointments.map(app => {
-          const isPast = isPastAppointment(app.dateTime);
-          const isCancel = isCancelado(app.status);
-          const isAtend = isAtendiendo(app.status);
-          const isFinal = isFinalizado(app.status);
+      <h2 className="text-2xl font-bold text-gray-800">Mis Turnos de {activeSpecialty?.descripcion || ' '}</h2>
+      {filteredTurnos.length > 0 ? (
+        filteredTurnos.map(turno => {
+          // 5. Usamos datos y lógica reales
+          const uniqueKey = `${turno.Fecha}-${turno.Hora}-${turno.Paciente_nroPaciente}`;
+          const isPast = isPastAppointment(turno.Fecha, turno.Hora);
+          const isCancelado = turno.estado === 'Cancelado';
+          const isAtendiendo = turno.estado === 'Atendido';
+          const isFinalizado = turno.estado === 'Finalizado';
           return (
-            <div key={app.id} className={`p-5 rounded-lg shadow-md border-l-4 ${statusStyles[app.status]}`}>
+            <div key={uniqueKey} className={`p-5 rounded-lg shadow-md border-l-4 ${statusStyles[turno.estado]}`}>
               <div className="flex flex-col md:flex-row justify-between">
                 <div>
-                  <p className="font-bold text-lg text-gray-800 flex items-center gap-2"><User size={20}/> {app.patientName}</p>
-                  <p className="text-gray-600 flex items-center gap-2 mt-1"><Calendar size={16}/> {formatDateTime(app.dateTime)}</p>
-                  <p className="text-gray-600 flex items-center gap-2 mt-1"><FileText size={16}/> Motivo: <span className="italic">{app.reason}</span></p>
-                  <p className={`mt-2 text-sm font-semibold`}>Estado: {app.status}</p>
+                  <p className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                    <User size={20}/> {`${turno.paciente_nombre} ${turno.paciente_apellido}`}
+                  </p>
+                  <p className="text-gray-600 flex items-center gap-2 mt-1">
+                    <Calendar size={16}/> {formatDateTime(turno.Fecha, turno.Hora)}
+                  </p>
+                  <p className="text-gray-600 flex items-center gap-2 mt-1">
+                    <FileText size={16}/> Motivo: <span className="italic">{turno.Motivo || 'No especificado'}</span>
+                  </p>
+                  <p className={`mt-2 text-sm font-semibold text-gray-700`}>Estado: <span className="font-bold">{turno.estado}</span></p>
                 </div>
                 <div className="flex flex-wrap items-start gap-2 mt-4 md:mt-0">
-                  <button onClick={() => handleOpenModal('prescriptions', app)} disabled={isCancel} className="flex items-center gap-2 px-4 py-2 text-sm bg-purple-100 text-purple-700 font-semibold rounded-md hover:bg-purple-200"><Pill size={16}/> Recetas</button>
-                  <button onClick={() => handleOpenModal('Atendiendo', app)} disabled={isPast || isCancel || isAtend || isFinal} className="p-2 bg-teal-100 text-teal-700 rounded-full hover:bg-teal-200 disabled:bg-gray-100 disabled:text-gray-400"><Play size={16}/></button>
-                  <button onClick={() => handleOpenModal('Finalizado', app)} disabled={isPast || isCancel || isFinal} className="p-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 disabled:bg-gray-100 disabled:text-gray-400"><Check size={16}/></button>
-                  <button onClick={() => handleOpenModal('edit', app)} disabled={isPast || isCancel || isAtend || isFinal} className="p-2 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 disabled:bg-gray-100 disabled:text-gray-400"><Edit size={16}/></button>
-                  <button onClick={() => handleOpenModal('Cancelado', app)} disabled={isPast || isCancel || isFinal} className="p-2 bg-red-100 text-red-700 rounded-full hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400"><Trash2 size={16}/></button>
+                  <button onClick={() => handleOpenModal('prescriptions', turno)} disabled={isCancelado} className="flex items-center gap-2 px-4 py-2 text-sm bg-purple-100 text-purple-700 font-semibold rounded-md hover:bg-purple-200 disabled:opacity-50">
+                    <Pill size={16}/> Recetas
+                  </button>
+                  <button onClick={() => handleOpenModal('Atendido', turno)} disabled={isPast || isCancelado || isAtendiendo || isFinalizado} className="p-2 bg-teal-100 text-teal-700 rounded-full hover:bg-teal-200 disabled:bg-gray-100 disabled:text-gray-400">
+                    <Play size={16}/>
+                  </button>
+                  <button onClick={() => handleOpenModal('Finalizado', turno)} disabled={isPast || isCancelado || isFinalizado} className="p-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 disabled:bg-gray-100 disabled:text-gray-400">
+                    <Check size={16}/>
+                  </button>
+                  <button onClick={() => handleOpenModal('edit', turno)} disabled={isCancelado || isFinalizado} className="p-2 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 disabled:bg-gray-100 disabled:text-gray-400">
+                    <Edit size={16}/>
+                  </button>
+                  <button onClick={() => handleOpenModal('Cancelado', turno)} disabled={isPast || isCancelado || isFinalizado} className="p-2 bg-red-100 text-red-700 rounded-full hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400">
+                    <Trash2 size={16}/>
+                  </button>
                 </div>
               </div>
             </div>
@@ -124,16 +365,44 @@ export default function DoctorAppointments({ activeSpecialty }: { activeSpecialt
       )}
 
       {/* --- MODALES --- */}
-      {selectedAppointment && (
+      {selectedTurno && (
         <>
+        
           {/* Modal de Edición */}
           {modal === 'edit' && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
               <form onSubmit={handleSaveChanges} className="bg-white rounded-lg p-6 w-full max-w-lg">
-                <h2 className="text-xl font-bold mb-4">Editar Turno de {selectedAppointment.patientName}</h2>
+                <h2 className="text-xl font-bold mb-4">Editar Turno de {selectedTurno.paciente_nombre} {selectedTurno.paciente_apellido}</h2>
                 <div className="space-y-4">
-                  <input type="datetime-local" value={selectedAppointment.dateTime.substring(0, 16)} onChange={e => setSelectedAppointment({...selectedAppointment, dateTime: e.target.value})} className="w-full p-2 border rounded-md"/>
-                  <textarea placeholder="Diagnóstico..." rows={4} value={selectedAppointment.diagnosis} onChange={e => setSelectedAppointment({...selectedAppointment, diagnosis: e.target.value})} className="w-full p-2 border rounded-md"></textarea>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Fecha y Hora</label>
+                    <input 
+                        name="fechaHora"
+                        type="datetime-local" 
+                        defaultValue={`${selectedTurno.Fecha}T${selectedTurno.Hora}`} 
+                        className="w-full p-2 border rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Motivo</label>
+                    <textarea 
+                        name="motivo"
+                        placeholder="Motivo..." 
+                        rows={2} 
+                        defaultValue={selectedTurno.Motivo || ''} 
+                        className="w-full p-2 border rounded-md"
+                    ></textarea>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Diagnóstico</label>
+                    <textarea 
+                        name="diagnostico"
+                        placeholder="Diagnóstico..." 
+                        rows={4} 
+                        defaultValue={selectedTurno.Diagnostico || ''} 
+                        className="w-full p-2 border rounded-md"
+                    ></textarea>
+                  </div>
                 </div>
                 <div className="flex justify-end gap-4 mt-6">
                   <button type="button" onClick={handleCloseModals} className="px-4 py-2 rounded-md bg-gray-200">Cancelar</button>
@@ -144,42 +413,121 @@ export default function DoctorAppointments({ activeSpecialty }: { activeSpecialt
           )}
 
           {/* Modal de Recetas */}
-          {modal === 'prescriptions' && (
+          {modal === 'prescriptions' && selectedTurno && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg p-6 w-full max-w-lg">
-                <h2 className="text-xl font-bold mb-4">Recetas para {selectedAppointment.patientName}</h2>
-                <div className="mb-4">
-                  <h3 className="font-semibold mb-2">Recetas Actuales</h3>
-                  {selectedAppointment.prescriptions.length > 0 ? (
-                    <ul className="list-disc list-inside space-y-1">{selectedAppointment.prescriptions.map(p => <li key={p.id}>{p.medicine} (Cantidad: {p.quantity})</li>)}</ul>
-                  ) : <p>No hay recetas.</p>}
+              <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold">Recetas para {selectedTurno.paciente_nombre}</h2>
+                    {selectedTurno.estado === 'Atendido' && (
+                        <button 
+                            onClick={handleCreateReceta}
+                            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                        >
+                            <Plus size={16}/> Nueva Receta
+                        </button>
+                    )}
                 </div>
-                {isAtendiendo(selectedAppointment.status) && (<form onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); handleAddPrescription(data.get('medicine') as string, Number(data.get('quantity'))); e.currentTarget.reset(); }} className="border-t pt-4 space-y-2">
-                   <h3 className="font-semibold mb-2">Añadir Nueva Receta</h3>
-                   <select name="medicine" className="w-full p-2 border rounded-md" ><option value="">Seleccionar medicamento...</option>{mockMedicines.map(m => <option key={m} value={m}>{m}</option>)}</select>
-                   <input type="number" name="quantity" placeholder="Cantidad" min="1" className="w-full p-2 border rounded-md"/>
-                   <button type="submit" className="px-4 py-2 rounded-md bg-purple-600 text-white w-full">Añadir Receta</button>
-                </form>)}
-                <div className="text-right mt-4"><button onClick={handleCloseModals} className="px-4 py-2 rounded-md bg-gray-200">Cerrar</button></div>
+                
+                <div className="space-y-6">
+                  {recetas.length === 0 ? (
+                    <p className="text-gray-500 text-center py-4">No hay recetas generadas para este turno.</p>
+                  ) : (
+                    recetas.map((receta) => (
+                        <div key={receta.Id} className="border rounded-lg p-4 bg-gray-50 shadow-sm">
+                            <div className="flex justify-between items-center mb-3 border-b pb-2">
+                                <h3 className="font-semibold text-gray-800">Receta #{receta.Id}</h3>
+                                {selectedTurno.estado === 'Atendido' && (
+                                    <button 
+                                        onClick={() => handleDeleteReceta(receta.Id)}
+                                        className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
+                                    >
+                                        <Trash2 size={14} /> Eliminar Receta
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Lista de Medicamentos */}
+                            <div className="mb-3">
+                                {receta.medicamentos.length === 0 ? (
+                                    <p className="text-sm text-gray-500 italic">Sin medicamentos.</p>
+                                ) : (
+                                    <ul className="space-y-2">
+                                        {receta.medicamentos.map((med, idx) => (
+                                            <li key={`${receta.Id}-${med.Id}-${idx}`} className="flex items-center gap-2 text-sm bg-white p-2 rounded border">
+                                                <Pill size={14} className="text-blue-500"/>
+                                                <span className="font-medium">{med.Nombre}</span>
+                                                {med.dosis && <span className="text-gray-500">({med.dosis})</span>}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+
+                            {/* Formulario para agregar medicamento (Solo si Atendido) */}
+                            {selectedTurno.estado === 'Atendido' && (
+                                <div className="mt-3 flex gap-2 items-end bg-white p-3 rounded border border-dashed border-gray-300">
+                                    <div className="flex-1">
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Medicamento</label>
+                                        <select 
+                                            className="w-full p-1.5 text-sm border rounded"
+                                            value={selectedMedicamentoId}
+                                            onChange={(e) => setSelectedMedicamentoId(e.target.value ? Number(e.target.value) : '')}
+                                        >
+                                            <option value="">Seleccionar...</option>
+                                            {availableMedicamentos.map(m => (
+                                                <option key={m.Id} value={m.Id}>{m.Nombre} {m.dosis ? `(${m.dosis})` : ''}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="w-24">
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Cantidad</label>
+                                        <input 
+                                            type="number" 
+                                            className="w-full p-1.5 text-sm border rounded"
+                                            placeholder="Cant."
+                                            value={cantidad}
+                                            onChange={(e) => setCantidad(e.target.value)}
+                                        />
+                                    </div>
+                                    <button 
+                                        onClick={() => handleAddMedicamento(receta.Id)}
+                                        className="px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                                    >
+                                        Agregar
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ))
+                  )}
+                </div>
+                
+                <div className="text-right border-t pt-4 mt-4">
+                    <button onClick={handleCloseModals} className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium">
+                        Cerrar
+                    </button>
+                </div>
               </div>
             </div>
           )}
-          
+                  
           {/* Modales de Confirmación Simples */}
-          {['Cancelado', 'Atendiendo', 'Finalizado'].includes(modal || '') && (
+          {['Cancelado', 'Atendido', 'Finalizado'].includes(modal || '') && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-lg p-6 w-full max-w-md text-center">
                  <h2 className="text-xl font-bold mb-2">Confirmar Acción</h2>
                  <p className="text-gray-600 mb-4">¿Estás seguro de que quieres marcar este turno como <span className="font-semibold">{modal}?</span></p>
                  <div className="flex justify-center gap-4 mt-6">
                    <button onClick={handleCloseModals} className="px-6 py-2 rounded-md bg-gray-200">No, volver</button>
-                   <button onClick={() => handleStatusChange(modal as Appointment['status'])} className="px-6 py-2 rounded-md bg-blue-600 text-white">Sí, confirmar</button>
+                   <button onClick={() => handleStatusChange(modal as Turno['estado'])} className="px-6 py-2 rounded-md bg-blue-600 text-white">Sí, confirmar</button>
                  </div>
               </div>
             </div>
           )}
         </>
       )}
+	  
+	  
+	  
     </div>
-  );
-}
+  );}

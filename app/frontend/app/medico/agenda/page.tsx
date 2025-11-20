@@ -1,27 +1,23 @@
-// app/medico/agenda/page.tsx
+'use client';
 
-'use client'; // Sigue siendo un Componente de Cliente para usar hooks
-
-import AgendaManager from '../../components/AgendaManager';
-// 1. Importamos nuestro hook personalizado
-import { useSpecialty } from '../../contexts/SpecialtyContext'; // Ajusta la ruta
+import AgendaManager from '@/app/components/AgendaManager'; // Ajusta la ruta a tu componente
+import { useMedico } from '@/app/contexts/MedicoContext';   // Ajusta la ruta a tu contexto
 
 export default function AgendaPage() {
-  // 2. Leemos el valor del contexto
-  const { activeSpecialty } = useSpecialty();
+  // Leemos los datos centralizados desde el contexto
+  const { medico, activeSpecialty } = useMedico();
 
+  // Mostramos un estado de carga mientras los datos del contexto se resuelven
+  if (!medico || !activeSpecialty) {
+    return <div>Cargando agenda...</div>;
+  }
+
+  // Una vez que tenemos los datos, renderizamos AgendaManager con las props necesarias
   return (
-    <div className="p-4 sm:p-6 md:p-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Gestionar Mi Agenda</h1>
-        <p className="text-gray-500 mt-1">
-          Define tus horarios de trabajo habituales y programa cualquier excepción.
-        </p>
-      </header>
-      <main>
-        {/* 3. Pasamos el valor como prop, igual que antes */}
-        <AgendaManager activeSpecialty={activeSpecialty} />
-      </main>
-    </div>
+    <AgendaManager
+      medicoMatricula={medico.Matricula}
+      activeSpecialtyId={activeSpecialty.Id_especialidad}
+      activeSpecialtyName={activeSpecialty.descripcion}
+    />
   );
 }

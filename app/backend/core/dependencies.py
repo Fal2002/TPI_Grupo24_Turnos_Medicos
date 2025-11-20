@@ -1,8 +1,8 @@
 # app/backend/core/dependencies.py
 
 from __future__ import annotations
-from typing import List
-from fastapi import Depends, HTTPException, status
+from typing import List, Optional
+from fastapi import Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from fastapi.security import HTTPAuthorizationCredentials
 
@@ -17,11 +17,23 @@ from app.backend.services.user_repository import UserRepository
 # 1. Obtener usuario actual desde el token JWT
 # ============================================
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    request: Request,
     db: Session = Depends(get_db),
 ) -> User:
 
-    token = credentials.credentials  # solo el JWT, sin "Bearer"
+    # 1. Intentar obtener token de la cookie
+    token = request.cookies.get("access_token")
+
+    # 2. Si no hay cookie, intentar Header (para Postman/Swagger)
+    if not token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido o expirado"
+        )
 
     payload = security.decode_access_token(token)
 

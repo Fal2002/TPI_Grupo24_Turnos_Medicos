@@ -5,63 +5,70 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Search, User, Calendar, Fingerprint, HeartPulse } from 'lucide-react';
+import { useMedico } from '../contexts/MedicoContext';
+import { getPacientesPorMedico } from '@/services/pacientes';
 
 // --- Tipos de Datos ---
 type Patient = {
   id: number;
   name: string;
-  dni: string;
+  dni: string; // Usaremos nroPaciente como identificador visual por ahora
   lastVisit: string | null;
   nextAppointment: string | null;
   // Un paciente puede estar asociado a un médico por varias especialidades
   associatedSpecialties: string[];
 };
 
-// --- Datos Falsos (Mock Data) - Reemplazar con llamada a la API ---
-const mockPatients: Patient[] = [
-  { id: 101, name: 'Carlos Sánchez', dni: '25.123.456', lastVisit: '2025-08-15', nextAppointment: '2025-12-20', associatedSpecialties: ['Cardiología'] },
-  { id: 102, name: 'Maria Rodriguez', dni: '30.987.654', lastVisit: '2025-06-10', nextAppointment: '2025-12-20', associatedSpecialties: ['Cardiología'] },
-  { id: 103, name: 'Lucia Fernández', dni: '35.456.789', lastVisit: '2025-11-01', nextAppointment: '2025-12-21', associatedSpecialties: ['Clínica General'] },
-  { id: 104, name: 'Pedro Gómez', dni: '22.789.123', lastVisit: '2025-10-01', nextAppointment: null, associatedSpecialties: ['Cardiología'] },
-  { id: 105, name: 'Ana Perez', dni: '40.123.456', lastVisit: null, nextAppointment: '2025-12-22', associatedSpecialties: ['Clínica General'] },
-  { id: 106, name: 'Lucia Martinez', dni: '33.555.888', lastVisit: '2025-05-20', nextAppointment: null, associatedSpecialties: ['Clínica General'] },
-];
-
 const formatDate = (dateString: string | null) => {
   if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleDateString('es-ES', {
-    day: '2-digit', month: '2-digit', year: 'numeric'
-  });
+  // Asumimos formato YYYY-MM-DD que viene del backend
+  const [year, month, day] = dateString.split('-');
+  return `${day}/${month}/${year}`;
 };
 
 // --- Componente Principal ---
 export default function PatientList({ activeSpecialty }: { activeSpecialty: string }) {
+  const { medico, activeSpecialty: activeSpecialtyObj } = useMedico();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    // Simula la carga de datos
-    setTimeout(() => {
-      setPatients(mockPatients);
-      setIsLoading(false);
-    }, 500);
-  }, []);
+    const fetchPatients = async () => {
+        if (!medico || !activeSpecialtyObj) return;
+        setIsLoading(true);
+        try {
+            const data = await getPacientesPorMedico(medico.Matricula, activeSpecialtyObj.Id_especialidad);
+            // Mapear los datos de la API al formato del componente
+            const mappedPatients: Patient[] = data.map((p: any) => ({
+                id: p.nroPaciente,
+                name: `${p.Nombre} ${p.Apellido}`,
+                dni: p.nroPaciente.toString(), // El modelo no tiene DNI, usamos nroPaciente
+                lastVisit: p.UltimaVisita, // Viene del backend
+                nextAppointment: p.ProximoTurno, // Viene del backend
+                associatedSpecialties: [] // No disponible en este endpoint
+            }));
+            setPatients(mappedPatients);
+        } catch (error) {
+            console.error("Error fetching patients:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    fetchPatients();
+  }, [medico, activeSpecialtyObj]);
 
   // Filtra los pacientes por especialidad y por término de búsqueda
   const filteredPatients = useMemo(() => {
     const lowercasedSearch = searchTerm.toLowerCase();
     return patients
-      .filter(patient => 
-        // 1. Filtro por especialidad
-        patient.associatedSpecialties.includes(activeSpecialty)
-      )
       .filter(patient =>
         // 2. Filtro por búsqueda (nombre o DNI)
         patient.name.toLowerCase().includes(lowercasedSearch) ||
-        patient.dni.replace(/\./g, '').includes(lowercasedSearch)
+        patient.dni.includes(lowercasedSearch)
       );
-  }, [patients, activeSpecialty, searchTerm]);
+  }, [patients, searchTerm]);
 
   if (isLoading) return <div>Cargando pacientes...</div>;
 
@@ -76,7 +83,7 @@ export default function PatientList({ activeSpecialty }: { activeSpecialty: stri
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Buscar por nombre o DNI..."
+          placeholder="Buscar por nombre o Nro Paciente..."
           className="w-full p-3 pl-10 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
@@ -98,7 +105,7 @@ export default function PatientList({ activeSpecialty }: { activeSpecialty: stri
                   </p>
                   <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
                     <Fingerprint size={16} />
-                    DNI: {patient.dni}
+                    Nro: {patient.dni}
                   </p>
                 </div>
                 <div className="mt-3 sm:mt-0 text-left sm:text-right">

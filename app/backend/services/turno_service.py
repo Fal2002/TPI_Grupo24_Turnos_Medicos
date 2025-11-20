@@ -70,6 +70,11 @@ class TurnoService:
         if not turno:
             raise RecursoNoEncontradoError("Turno no encontrado con la PK dada.")
         return turno
+    def obtener_turnos_por_medico(self, matricula: str) -> List[Turno]:
+        return self.turno_repo.get_by_medico_matricula(matricula)
+    
+    def obtener_turnos_por_paciente(self, nro_paciente: int) -> List[Turno]:
+        return self.turno_repo.get_by_paciente_nro(nro_paciente)
         
     def cambiar_estado(self, pk_data: dict, accion: str) -> Turno:
         turno = self._obtener_turno_o_404(pk_data)
@@ -89,3 +94,9 @@ class TurnoService:
     def eliminar_turno(self, pk_data: dict) -> None:
         turno = self._obtener_turno_o_404(pk_data)
         self.turno_repo.delete(turno)
+
+    def modificar_turno(self, pk_data: dict, nuevos_datos: dict) -> Turno:
+        turno = self._obtener_turno_o_404(pk_data)
+        for key, value in nuevos_datos.items():
+            setattr(turno, key, value)
+        return self.turno_repo.update(turno)

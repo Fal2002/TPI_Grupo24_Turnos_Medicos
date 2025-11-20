@@ -18,5 +18,7 @@ class PacienteUpdate(BaseModel):
 
 class PacienteOut(PacienteBase):
     nroPaciente: int
+    UltimaVisita: Optional[str] = None
+    ProximoTurno: Optional[str] = None
     class Config:
         orm_mode = True

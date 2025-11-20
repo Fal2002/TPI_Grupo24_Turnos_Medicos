@@ -37,6 +37,24 @@ export async function getPacienteByNumero(numero: string | number) {
   return await res.json();
 }
 
+//export paciente por medico
+export async function getPacientesPorMedico(medico_matricula: string, especialidad_id?: number) {
+  let url = `${API_URL}/medico/${medico_matricula}`;
+  if (especialidad_id) {
+      url += `?especialidad_id=${especialidad_id}`;
+  }
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!res.ok) {
+    throw new Error('Error al obtener los pacientes del médico');
+  }
+
+  return await res.json();
+}
+
 // Actualizar paciente usando su Número
 export async function updatePaciente(numero: string | number, data: any) {
   const res = await fetch(`${API_URL}/${numero}`, {

@@ -2,43 +2,109 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Clock, User, ChevronRight, Calendar, FileText } from 'lucide-react';
+import { Clock, User, ChevronRight, FileText } from 'lucide-react';
+import { useMedico } from '../contexts/MedicoContext';
+import { getTurnosPorMedico } from '@/services/turnos';
+import { getPacienteByNumero } from '@/services/pacientes';
 
 type Appointment = {
-  id: number;
+  id: string;
   patientName: string;
-  specialty: string; // Necesario para filtrar
+  specialty: string;
   date: string; // Formato ISO YYYY-MM-DD
   time: string;
   reason: string;
 };
 
-// DATOS FALSOS (Mock Data)
-const mockAppointments: Appointment[] = [
-  { id: 1, patientName: 'Carlos Sánchez', specialty: 'Cardiología', date: '2025-11-18', time: '10:30', reason: 'Control anual' },
-  { id: 2, patientName: 'Maria Rodriguez', specialty: 'Cardiología', date: '2025-11-18', time: '11:00', reason: 'Dolor en el pecho' },
-  { id: 3, patientName: 'Lucia Fernández', specialty: 'Clínica General', date: '2025-11-18', time: '09:00', reason: 'Chequeo de rutina' },
-  { id: 4, patientName: 'Pedro Gómez', specialty: 'Cardiología', date: '2025-11-19', time: '14:30', reason: 'Resultados estudios' },
-  { id: 5, patientName: 'Ana Perez', specialty: 'Clínica General', date: '2025-11-19', time: '10:00', reason: 'Consulta por gripe' },
-];
+export default function DoctorUpcomingAppointments({ activeSpecialty: activeSpecialtyName }: { activeSpecialty: string }) {
+  const { medico, activeSpecialty } = useMedico();
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-export default function DoctorUpcomingAppointments({ activeSpecialty }: { activeSpecialty: string }) {
-  // 1. Filtramos por la especialidad seleccionada en el Sidebar
-  // 2. Ordenamos por fecha y hora
-  // 3. Tomamos solo los primeros 3 o 4 para no saturar el widget
-  const filteredAppointments = mockAppointments
-    .filter(app => app.specialty === activeSpecialty)
-    .sort((a, b) => new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime())
-    .slice(0, 4); // Mostrar solo los próximos 4
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      if (!medico || !activeSpecialty) return;
+      
+      setIsLoading(true);
+      try {
+        const turnos = await getTurnosPorMedico(medico.Matricula);
+        
+        const now = new Date();
+        
+        // 1. Filtrar por especialidad, estado y fecha futura
+        const upcomingTurnos = turnos.filter((t: any) => {
+          // Filtro por especialidad
+          if (t.Especialidad_Id !== activeSpecialty.Id_especialidad) return false;
+          
+          // Filtro por estado (solo activos)
+          const validStates = ['Pendiente', 'Confirmado', 'Atendido'];
+          // Nota: El backend puede devolver 'Atendido' o 'Atendiendo', ajustar según corresponda.
+          // Asumimos que el backend devuelve el estado en la propiedad 'estado' o 'Estado_Id' mapeado.
+          // En DoctorAppointments.tsx se usa t.estado.
+          if (!validStates.includes(t.estado)) return false;
+
+          // Filtro por fecha (Futuro o Hoy pero hora futura)
+          const turnoDate = new Date(`${t.Fecha}T${t.Hora}`);
+          // Permitimos turnos de hoy que aún no han pasado (o con un margen)
+          // Para simplificar, mostramos todos los de hoy en adelante que no estén finalizados
+          return turnoDate >= now || t.Fecha === now.toISOString().split('T')[0];
+        });
+
+        // 2. Ordenar por fecha y hora
+        upcomingTurnos.sort((a: any, b: any) => {
+          return new Date(`${a.Fecha}T${a.Hora}`).getTime() - new Date(`${b.Fecha}T${b.Hora}`).getTime();
+        });
+
+        // 3. Tomar los primeros 4
+        const nextTurnos = upcomingTurnos.slice(0, 4);
+
+        // 4. Enriquecer con datos del paciente
+        const enrichedAppointments = await Promise.all(nextTurnos.map(async (t: any) => {
+          try {
+            const paciente = await getPacienteByNumero(t.Paciente_nroPaciente);
+            return {
+              id: `${t.Fecha}-${t.Hora}-${t.Paciente_nroPaciente}`,
+              patientName: `${paciente.Nombre} ${paciente.Apellido}`,
+              specialty: activeSpecialty.descripcion,
+              date: t.Fecha,
+              time: t.Hora,
+              reason: t.Motivo || 'Sin motivo especificado'
+            };
+          } catch (error) {
+            console.error(`Error fetching paciente ${t.Paciente_nroPaciente}`, error);
+            return {
+              id: `${t.Fecha}-${t.Hora}-${t.Paciente_nroPaciente}`,
+              patientName: 'Paciente Desconocido',
+              specialty: activeSpecialty.descripcion,
+              date: t.Fecha,
+              time: t.Hora,
+              reason: t.Motivo || 'Sin motivo'
+            };
+          }
+        }));
+
+        setAppointments(enrichedAppointments);
+      } catch (error) {
+        console.error("Error fetching upcoming appointments:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAppointments();
+  }, [medico, activeSpecialty]);
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    // Si es hoy, mostrar "Hoy"
+    const date = new Date(dateStr + 'T00:00:00'); // Asegurar interpretación local
     const today = new Date();
+    
     if (date.toDateString() === today.toDateString()) return 'Hoy';
     return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   };
+
+  if (isLoading) return <div className="p-6 bg-white rounded-lg shadow-md border border-gray-200 h-full flex items-center justify-center">Cargando...</div>;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200 h-full">
@@ -47,13 +113,13 @@ export default function DoctorUpcomingAppointments({ activeSpecialty }: { active
           Próximos Pacientes
         </h2>
         <span className="text-xs font-semibold px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
-          {activeSpecialty}
+          {activeSpecialty?.descripcion || activeSpecialtyName}
         </span>
       </div>
 
       <div className="space-y-4">
-        {filteredAppointments.length > 0 ? (
-          filteredAppointments.map((app) => (
+        {appointments.length > 0 ? (
+          appointments.map((app) => (
             <div
               key={app.id}
               className="block p-3 rounded-lg border bg-gray-50 hover:bg-gray-100 transition-colors"

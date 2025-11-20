@@ -13,6 +13,22 @@ class TurnoRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def get_by_medico_matricula(self, matricula: str) -> List[Turno]:
+        """Obtiene todos los turnos asociados a un médico específico por su matrícula."""
+        return (
+            self.db.query(Turno)
+            .filter(Turno.Medico_Matricula == matricula)
+            .all()
+        )
+    
+    def get_by_paciente_nro(self, nro_paciente: int) -> List[Turno]:
+        """Obtiene todos los turnos asociados a un paciente específico por su número de paciente."""
+        return (
+            self.db.query(Turno)
+            .filter(Turno.Paciente_nroPaciente == nro_paciente)
+            .all()
+        )
+
     def get_by_pk(
         self, fecha: str, hora: str, paciente_nro: int
     ) -> Optional[Turno]:  # Corregido: Turno | None
@@ -65,6 +81,21 @@ class TurnoRepository:
         """Elimina un turno de la base de datos."""
         self.db.delete(turno)
         self.db.commit()
+
+    def modificar_turno(self, pk_data: dict, nuevos_datos: dict) -> Turno:
+        """Modifica los datos de un turno existente."""
+        turno = self.get_by_pk(
+            pk_data["fecha"], pk_data["hora"], pk_data["paciente_nro"]
+        )
+        if not turno:
+            raise ValueError("Turno no encontrado con la PK dada.")
+
+        for key, value in nuevos_datos.items():
+            setattr(turno, key, value)
+
+        self.db.commit()
+        self.db.refresh(turno)
+        return turno
 
     # =========================================================================
     # ROL DE SOPORTE PARA REPORTES (CONSULTAS COMPLEJAS)

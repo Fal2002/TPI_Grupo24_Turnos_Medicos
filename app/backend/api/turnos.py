@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.backend.db.db import get_db
-from app.backend.schemas.turno import TurnoCreate, TurnoOut
+from app.backend.schemas.turno import TurnoCreate, TurnoOut, TurnoUpdate
 from app.backend.services.turno_service import TurnoService
 from app.backend.services.turno_repository import TurnoRepository
 from app.backend.services.agenda_repository import AgendaRepository
@@ -61,6 +61,17 @@ def registrar_turno(
 def obtener_todos_los_turnos(service: TurnoService = Depends(get_turno_service)):
     return service.obtener_turnos()
 
+@router.get("/medico/{matricula}", response_model=List[TurnoOut])
+def obtener_turnos_por_medico(
+    matricula: str, service: TurnoService = Depends(get_turno_service)
+):
+    return service.obtener_turnos_por_medico(matricula)
+
+@router.get("/paciente/{nro_paciente}", response_model=List[TurnoOut])
+def obtener_turnos_por_paciente(
+    nro_paciente: int, service: TurnoService = Depends(get_turno_service)
+):
+    return service.obtener_turnos_por_paciente(nro_paciente)
 
 # ----------------------------------------------------
 # Endpoint 3: Cambios de Estado (Patrón State)
@@ -124,3 +135,29 @@ def eliminar_turno_endpoint(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Turno no encontrado"
         )
+    
+@router.put("/{fecha}/{hora}/{nro_paciente}", response_model=TurnoOut)
+def actualizar_turno_endpoint(
+    fecha: str,
+    hora: str,
+    nro_paciente: int,
+    payload: TurnoUpdate,
+    service: TurnoService = Depends(get_turno_service),
+):
+    pk_data = {"fecha": fecha, "hora": hora, "paciente_nro": nro_paciente}
+    try:
+        # Convert payload to dict, excluding None values
+        nuevos_datos = payload.model_dump(exclude_unset=True, by_alias=True)
+        # Convert date to string if present, to match DB format (Text)
+        if "Fecha" in nuevos_datos:
+            nuevos_datos["Fecha"] = str(nuevos_datos["Fecha"])
+            
+        return service.modificar_turno(pk_data, nuevos_datos)
+
+    except RecursoNoEncontradoError as e:
+        # Falla de recurso no encontrado (404)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Turno no encontrado"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
