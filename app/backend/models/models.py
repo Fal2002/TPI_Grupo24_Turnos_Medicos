@@ -186,8 +186,6 @@ class DetalleReceta(Base):
         ForeignKey("Medicamentos.Id", ondelete="RESTRICT", onupdate="CASCADE"),
         primary_key=True
     )
-    Dosis = Column(Text, nullable=True)
-    Frecuencia = Column(Text, nullable=True)
 
     medicamento = relationship("Medicamento", back_populates="detalles")
     receta = relationship("Receta", back_populates="detalles")

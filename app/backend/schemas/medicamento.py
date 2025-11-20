@@ -1,55 +1,56 @@
 from pydantic import BaseModel
+from typing import Optional
 
-class DosisBase(BaseModel):
+# --- Dosis ---
+class DosisCreate(BaseModel):
     cantidad: float
     unidad: str
     frecuencia: str
 
-class DosisCreate(DosisBase):
-    pass
-
 class DosisUpdate(BaseModel):
-    cantidad: float | None = None
-    unidad: str | None = None
-    frecuencia: str | None = None
+    cantidad: Optional[float] = None
+    unidad: Optional[str] = None
+    frecuencia: Optional[str] = None
 
+# --- Medicamento ---
 class MedicamentoBase(BaseModel):
     Nombre: str
-    Droga_Id: int | None = None
+    Droga_Id: Optional[int] = None
 
 class MedicamentoCreate(MedicamentoBase):
     dosis: DosisCreate
 
 class MedicamentoUpdate(BaseModel):
-    Nombre: str | None = None
-    Droga_Id: int | None = None
-    dosis: DosisUpdate | None = None
+    Nombre: Optional[str] = None
+    Droga_Id: Optional[int] = None
+    dosis: Optional[DosisUpdate] = None
 
+# --- Salida ---
 class DrogaNested(BaseModel):
     Id: int
     Descripcion: str
 
-    model_config = {"from_attributes": True}
+    class Config:
+        from_attributes = True
 
 class MedicamentoOut(BaseModel):
     Id: int
     Nombre: str
-    Droga: DrogaNested | None
-    Dosis: dict | None
+    Droga: Optional[DrogaNested] = None
+    Dosis: Optional[dict] = None
 
     @classmethod
-    def model_validate(cls, med):
-        dosis = None
-        if med.dosis_cantidad is not None or med.dosis_unidad is not None or med.dosis_frecuencia is not None:
-            dosis = {
-                "cantidad": med.dosis_cantidad,
-                "unidad": med.dosis_unidad,
-                "frecuencia": med.dosis_frecuencia
-            }
+    def from_orm_obj(cls, med):
+        dosis = {
+            "dosis_cantidad": med.dosis_cantidad,
+            "dosis_unidad": med.dosis_unidad,
+            "dosis_frecuencia": med.dosis_frecuencia
+        } if any([med.dosis_cantidad, med.dosis_unidad, med.dosis_frecuencia]) else None
+
         return cls(
             Id=med.Id,
             Nombre=med.Nombre,
-            Droga=med.droga,
+            Droga=getattr(med, "droga", None),  # nombre de la relación en SQLAlchemy
             Dosis=dosis
         )
 

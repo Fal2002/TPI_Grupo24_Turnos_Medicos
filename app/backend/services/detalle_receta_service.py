@@ -8,9 +8,8 @@ def crear_detalle_receta(db: Session, data: DetalleRecetaCreate):
     detalle = DetalleReceta(
         Receta_Id=data.Receta_Id,
         Medicamento_Id=data.Medicamento_Id,
-        Dosis=data.Dosis,
-        Frecuencia=data.Frecuencia
     )
+    
     db.add(detalle)
     try:
         db.commit()

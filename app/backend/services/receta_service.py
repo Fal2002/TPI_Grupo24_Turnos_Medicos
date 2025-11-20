@@ -4,8 +4,10 @@ from app.backend.models.models import (
     Receta, DetalleReceta, Medicamento, Turno,
     Paciente, Medico, Especialidad, Sucursal
 )
+
 from app.backend.schemas.receta_completa import RecetaCompletaOut, MedicamentoRecetaOut
 from app.backend.schemas.receta import RecetaCreate
+
 
 def crear_receta(db: Session, data: RecetaCreate):
     nueva = Receta(
@@ -18,8 +20,10 @@ def crear_receta(db: Session, data: RecetaCreate):
     db.refresh(nueva)
     return nueva
 
+
 def listar_recetas(db: Session):
     return db.query(Receta).all()
+
 
 def obtener_receta(db: Session, id: int):
     receta = db.query(Receta).filter(Receta.Id == id).first()
@@ -27,22 +31,38 @@ def obtener_receta(db: Session, id: int):
         raise HTTPException(status_code=404, detail="Receta no encontrada")
     return receta
 
+
 def eliminar_receta(db: Session, id: int):
     receta = db.query(Receta).filter(Receta.Id == id).first()
     if not receta:
         raise HTTPException(status_code=404, detail="Receta no encontrada")
     
-    db.query(DetalleReceta).filter(DetalleReceta.Receta_Id == id).delete()
+    db.query(DetalleReceta).filter(DetalleReceta.Receta_Id == id).delete(synchronize_session='fetch')
     
     db.delete(receta)
-    db.commit()
-    return {"msg": "Receta eliminada correctamente"}
+    
+    try:
+        db.commit()
+        return {"msg": "Receta eliminada correctamente"}
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="No se pudo eliminar la receta debido a una restricción de clave foránea. Verifica si está siendo referenciada por otra tabla no prevista."
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error inesperado durante la eliminación de la receta: {e}" 
+        )
 
 
 def obtener_receta_completa(db: Session, id: int):
     receta = db.query(Receta).filter(Receta.Id == id).first()
     if not receta:
         raise HTTPException(status_code=404, detail="Receta no encontrada")
+
 
     turno = (
         db.query(Turno)
@@ -53,13 +73,16 @@ def obtener_receta_completa(db: Session, id: int):
         )
         .first()
     )
+
     if not turno:
         raise HTTPException(status_code=500, detail="Turno asociado no encontrado")
+
 
     paciente = db.query(Paciente).filter(Paciente.nroPaciente == turno.Paciente_nroPaciente).first()
     medico = db.query(Medico).filter(Medico.Matricula == turno.Medico_Matricula).first()
     especialidad = db.query(Especialidad).filter(Especialidad.Id_especialidad == turno.Especialidad_Id).first()
     sucursal = db.query(Sucursal).filter(Sucursal.Id == turno.Sucursal_Id).first()
+
 
     detalles = (
         db.query(DetalleReceta, Medicamento)
@@ -67,6 +90,7 @@ def obtener_receta_completa(db: Session, id: int):
         .filter(DetalleReceta.Receta_Id == id)
         .all()
     )
+
 
     lista_medicamentos = []
     for detalle, med in detalles:
@@ -78,6 +102,7 @@ def obtener_receta_completa(db: Session, id: int):
                 "frecuencia": med.dosis_frecuencia
             }
 
+
         lista_medicamentos.append(
             MedicamentoRecetaOut(
                 Id=med.Id,
@@ -86,6 +111,7 @@ def obtener_receta_completa(db: Session, id: int):
                 Dosis=dosis
             )
         )
+
 
     return RecetaCompletaOut(
         Receta_Id=receta.Id,
