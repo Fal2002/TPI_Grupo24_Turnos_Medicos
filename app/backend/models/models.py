@@ -169,18 +169,22 @@ class AgendaExcepcional(Base):
 
 class Turno(Base):
     __tablename__ = "Turnos"
+
     Fecha = Column(Text, primary_key=True)
     Hora = Column(Text, primary_key=True)
+
     Paciente_nroPaciente = Column(
         Integer,
         ForeignKey("Pacientes.nroPaciente", ondelete="CASCADE", onupdate="CASCADE"),
         primary_key=True,
     )
+
     Medico_Matricula = Column(
         String,
         ForeignKey("Medicos.Matricula", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
     )
+
     Especialidad_Id = Column(
         Integer,
         ForeignKey(
@@ -188,16 +192,19 @@ class Turno(Base):
         ),
         nullable=False,
     )
+
     Estado_Id = Column(
         Integer,
         ForeignKey("Estados.Id", ondelete="SET NULL", onupdate="CASCADE"),
         nullable=True,
     )
+
     Sucursal_Id = Column(
         Integer,
         ForeignKey("Sucursales.Id", ondelete="SET NULL", onupdate="CASCADE"),
         nullable=True,
     )
+
     Duracion = Column(Integer)
     Motivo = Column(Text)
     Diagnostico = Column(Text)
