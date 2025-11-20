@@ -16,7 +16,8 @@ import {
   LogOut,
   Plus,        // Icono Crear
   LayoutList,  // Icono Gestionar (antes Eye)
-  ChevronDown 
+  ChevronDown,
+  BarChart3 
 } from 'lucide-react';
 import LogOutButton from './LogOut';
 
@@ -31,7 +32,10 @@ const navItems: NavItem[] = [
   { href: '/admin/medicos', label: 'Médicos', icon: Stethoscope },
   { href: '/admin/especialidades', label: 'Especialidades', icon: Award },
   { href: '/admin/sucursales', label: 'Sucursales', icon: Building2 },
-  { href: '/admin/consultorios', label: 'Consultorios', icon: DoorOpen },
+  { href: '/admin/consultorios', label: 'Consultorios', icon: DoorOpen }
+];
+const navReports: NavItem[] = [
+  { href: '/admin/reportes', label: 'Reportes', icon: BarChart3 }
 ];
 
 const LogoutButton = () => {
