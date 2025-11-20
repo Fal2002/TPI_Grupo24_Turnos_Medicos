@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from app.backend.models.models import Consultorio
 from app.backend.schemas.consultorio import ConsultorioCreate
 
+
 def get_consultorios(db: Session):
     return db.query(Consultorio).all()
 
@@ -14,7 +15,7 @@ def get_consultorio(db: Session, numero: int, sucursal_id: int):
     ).first()
 
     if not cons:
-        raise HTTPException(404, "Consultorio no encontrado")
+        raise HTTPException(status_code=404, detail="Consultorio no encontrado")
 
     return cons
 
@@ -22,13 +23,27 @@ def get_consultorio(db: Session, numero: int, sucursal_id: int):
 def create_consultorio(db: Session, data: ConsultorioCreate):
     nuevo = Consultorio(**data.dict())
     db.add(nuevo)
-    db.commit()
-    db.refresh(nuevo)
-    return nuevo
+    try:
+        db.commit()
+        db.refresh(nuevo)
+        return nuevo
+    except:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="El consultorio ya existe o la sucursal no es válida"
+        )
 
 
 def delete_consultorio(db: Session, numero: int, sucursal_id: int):
     cons = get_consultorio(db, numero, sucursal_id)
-    db.delete(cons)
-    db.commit()
-    return {"detail": "Consultorio eliminado"}
+    try:
+        db.delete(cons)
+        db.commit()
+        return {"detail": "Consultorio eliminado"}
+    except:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="No se pudo eliminar el consultorio"
+        )

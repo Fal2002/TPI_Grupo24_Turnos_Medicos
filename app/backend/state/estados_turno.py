@@ -1,24 +1,31 @@
-from .turno_state import EstadoTurno
+from sqlalchemy.orm import Session
+from fastapi import HTTPException
 
-class PendienteState(EstadoTurno):
-    def confirmar(self): self.set_estado("Confirmado")
-    def cancelar(self): self.set_estado("Cancelado")
-    def reprogramar(self): self.set_estado("Pendiente")
-    def anunciar(self): self.set_estado("Anunciado")
+class EstadoTurno:
+    def __init__(self, turno, db: Session):
+        self.turno = turno
+        self.db = db
 
-class ConfirmadoState(EstadoTurno):
-    def cancelar(self): self.set_estado("Cancelado")
-    def atender(self): self.set_estado("Atendido")
-    def anunciar(self): self.set_estado("Anunciado")
+    def set_estado(self, descripcion: str):
+        # Import acá adentro → evita circular import
+        from app.backend.models.models import Estado
 
-class AnunciadoState(EstadoTurno):
-    def atender(self): self.set_estado("Atendido")
+        estado = (
+            self.db.query(Estado)
+            .filter(Estado.Descripcion == descripcion)
+            .first()
+        )
 
-class AtendidoState(EstadoTurno):
-    def finalizar(self): self.set_estado("Finalizado")
-    def marcarAusente(self): self.set_estado("Ausente")
+        if not estado:
+            raise HTTPException(500, f"Estado '{descripcion}' no existe en la BD.")
 
-class FinalizadoState(EstadoTurno): pass
-class CanceladoState(EstadoTurno): pass
-class AusenteState(EstadoTurno): pass
-# Los estados Finalizado, Cancelado y Ausente no permiten transiciones adicionales.
+        self.turno.Estado_Id = estado.Id
+
+    # Métodos por defecto (sobrescribir en cada State)
+    def confirmar(self): raise HTTPException(400, "Acción no permitida")
+    def cancelar(self): raise HTTPException(400, "Acción no permitida")
+    def reprogramar(self): raise HTTPException(400, "Acción no permitida")
+    def atender(self): raise HTTPException(400, "Acción no permitida")
+    def finalizar(self): raise HTTPException(400, "Acción no permitida")
+    def anunciar(self): raise HTTPException(400, "Acción no permitida")
+    def marcarAusente(self): raise HTTPException(400, "Acción no permitida")

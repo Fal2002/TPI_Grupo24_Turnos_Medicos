@@ -4,6 +4,10 @@ from typing import Optional
 class EspecialidadBase(BaseModel):
     descripcion: str
 
+
+class EspecialidadUpdate(BaseModel):
+    descripcion: Optional[str] = None
+
 class EspecialidadCreate(EspecialidadBase):
     pass
 
