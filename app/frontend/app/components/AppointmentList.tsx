@@ -9,7 +9,7 @@ import { getTurnosPorPaciente, cambiarEstadoTurno } from '@/services/turnos';
 import { getMedicos } from '@/services/medicos';
 import { getEspecialidades } from '@/services/especialidades';
 
-type AppointmentStatus = 'Confirmado' | 'Pendiente' | 'Anunciado' | 'Atendiendo' | 'Finalizado' | 'Cancelado' | 'Ausente';
+type AppointmentStatus = 'Confirmado' | 'Pendiente' | 'Anunciado' | 'Atendido' | 'Finalizado' | 'Cancelado' | 'Ausente';
 
 type Appointment = {
   Fecha: string;
@@ -26,7 +26,7 @@ const statusStyles: Record<AppointmentStatus, { container: string; badge: string
   Confirmado: { container: 'border-blue-500', badge: 'bg-blue-100 text-blue-800' },
   Pendiente: { container: 'border-yellow-500', badge: 'bg-yellow-100 text-yellow-800' },
   Anunciado: { container: 'border-cyan-500', badge: 'bg-cyan-100 text-cyan-800' },
-  Atendiendo: { container: 'border-teal-500', badge: 'bg-teal-100 text-teal-800' },
+  Atendido: { container: 'border-teal-500', badge: 'bg-teal-100 text-teal-800' },
   Finalizado: { container: 'border-green-500', badge: 'bg-green-100 text-green-800' },
   Cancelado: { container: 'border-gray-400', badge: 'bg-gray-200 text-gray-800' },
   Ausente: { container: 'border-red-500', badge: 'bg-red-100 text-red-800' },
@@ -163,7 +163,7 @@ export default function AppointmentList() {
   if (isLoading) return <div className="text-center text-gray-500">Cargando turnos...</div>;
 
   const AppointmentCard = ({ appointment }: { appointment: Appointment }) => {
-    const styles = statusStyles[appointment.estado];
+    const styles = statusStyles[appointment.estado] || { container: 'border-gray-200', badge: 'bg-gray-100 text-gray-800' };
     const canBeCancelled = ['Confirmado', 'Pendiente'].includes(appointment.estado);
 
     return (
