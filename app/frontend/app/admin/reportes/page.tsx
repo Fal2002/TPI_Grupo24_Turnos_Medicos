@@ -306,7 +306,7 @@ function ReportTableMedicos({ data }: { data: any[] }) {
                     <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600">
                       <div className="flex items-center gap-2">
                         <Calendar size={16} className="text-gray-400"/>
-                        <span>{new Date(turno.Fecha).toLocaleDateString()}</span>
+                        <span>{new Date(turno.Fecha + "T00:00:00").toLocaleDateString("es-AR")}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock size={16} className="text-gray-400"/>
@@ -430,7 +430,12 @@ function ReportTableAtendidos({ data }: { data: any[] }) {
                                 <div className="flex flex-col text-sm">
                                     <span className="font-semibold text-gray-800 flex items-center gap-2">
                                         <Calendar size={14} className="text-blue-500"/>
-                                        {new Date(item.Fecha).toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'long' })}
+                                        {new Date(item.Fecha + "T00:00:00").toLocaleDateString('es-AR', { 
+    weekday: 'short',
+    day: 'numeric',
+    month: 'long'
+})}
+
                                     </span>
                                     <span className="text-gray-500 text-xs ml-6 flex items-center gap-1">
                                         <Clock size={12}/> {item.Hora} hs

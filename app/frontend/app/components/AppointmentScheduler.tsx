@@ -55,24 +55,24 @@ export default function AppointmentScheduler({ patientId }: AppointmentScheduler
 
   // Fetch available times when date or doctor changes
   useEffect(() => {
-    if (selectedDoctor && selectedDate) {
-      setLoadingTimes(true);
-      getAgendaDisponible(selectedDoctor, selectedDate)
-        .then((data) => {
-          // data is List[AgendaDisponibleOut]
-          // We need to extract unique times
-          const times = data.map((item: any) => item.hora);
-          setAvailableTimes(times);
-        })
-        .catch((err) => {
-          console.error("Error fetching agenda:", err);
-          setAvailableTimes([]);
-        })
-        .finally(() => setLoadingTimes(false));
-    } else {
-      setAvailableTimes([]);
-    }
-  }, [selectedDoctor, selectedDate]);
+  if (selectedDoctor && selectedDate) {
+    setLoadingTimes(true);
+    getAgendaDisponible(selectedDoctor, selectedDate)
+      .then((data) => {
+        const times = [...new Set(data.map((item: any) => String(item.hora)))] as string[];
+setAvailableTimes(times);
+
+      })
+      .catch((err) => {
+        console.error("Error fetching agenda:", err);
+        setAvailableTimes([]);
+      })
+      .finally(() => setLoadingTimes(false));
+  } else {
+    setAvailableTimes([]);
+  }
+}, [selectedDoctor, selectedDate]);
+
 
   const filteredDoctors = doctors;
 
