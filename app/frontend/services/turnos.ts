@@ -1,4 +1,3 @@
-
 const API_URL = "http://localhost:8000/api";
 
 export interface TurnoCreate {
@@ -19,6 +18,20 @@ export interface AgendaDisponible {
   especialidad_id: number;
   duracion: number;
   sucursal_id?: number;
+}
+
+export interface TurnoOut {
+  Fecha: string;
+  Hora: string;
+  Paciente_nroPaciente: number;
+  Medico_Matricula: string;
+  Especialidad_Id: number;
+  estado?: string;
+  Motivo?: string;
+  Diagnostico?: string;
+  medico_nombre?: string;
+  medico_apellido?: string;
+  especialidad_descripcion?: string;
 }
 
 export async function getAgendaDisponible(matricula: string, fecha: string) {

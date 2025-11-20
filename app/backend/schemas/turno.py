@@ -30,6 +30,11 @@ class TurnoOut(BaseModel):
     estado: str | None = Field(default=None)   # <-- se usa la propiedad @property "estado"
     motivo: str | None = Field(default=None, alias="Motivo")
     diagnostico: str | None = Field(default=None, alias="Diagnostico")
+    
+    # Campos agregados para visualización
+    medico_nombre: str | None = Field(default=None)
+    medico_apellido: str | None = Field(default=None)
+    especialidad_descripcion: str | None = Field(default=None)
 
     class Config:
         from_attributes = True

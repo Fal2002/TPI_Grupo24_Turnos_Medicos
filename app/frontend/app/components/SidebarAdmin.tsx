@@ -96,7 +96,7 @@ const AdminSidebar = () => {
       >
         <div>
           <div className="mb-8 text-center flex flex-col items-center">
-            <Link href="/dashboard" className="text-xl font-bold text-white hover:text-gray-300 tracking-wider">
+            <Link href="/admin" className="text-xl font-bold text-white hover:text-gray-300 tracking-wider">
               ADMINISTRACIÓN
             </Link>
             <span className="text-xs text-gray-500 mt-1">Gestión Clínica</span>

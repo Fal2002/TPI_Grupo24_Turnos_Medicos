@@ -1,38 +1,61 @@
 // components/UpcomingAppointments.tsx
+'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
+import { usePaciente } from '../contexts/PacienteConetxt';
+import { getTurnosPorPaciente, TurnoOut } from '@/services/turnos';
 
-// En una aplicación real, obtendrías estos datos de tu API.
-const appointments = [
-  {
-    id: 1,
-    specialty: 'Cardiología',
-    doctor: 'Dr. Juan Morales',
-    date: '25 Oct, 2023',
-    time: '10:30 AM',
-    href: '/turnos/1', // Ruta al detalle del turno
-  },
-  {
-    id: 2,
-    specialty: 'Dermatología',
-    doctor: 'Dra. Ana Torres',
-    date: '28 Oct, 2023',
-    time: '04:00 PM',
-    href: '/turnos/2',
-  },
-  {
-    id: 3,
-    specialty: 'Queca',
-    doctor: 'Dra. Ana Torres',
-    date: '28 Oct, 2023',
-    time: '04:00 PM',
-    href: '/turnos/2',
-  },
-];
-
-// Este puede ser un Componente de Servidor, ya que solo muestra datos.
 export default function UpcomingAppointments() {
+  const { paciente } = usePaciente();
+  const [appointments, setAppointments] = useState<TurnoOut[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      if (paciente?.nroPaciente) {
+        try {
+          const data = await getTurnosPorPaciente(paciente.nroPaciente);
+          
+          // Filtrar turnos futuros (o del día)
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          const upcoming = data.filter((t: TurnoOut) => {
+             // Asumiendo formato YYYY-MM-DD y HH:MM
+             const turnoDate = new Date(`${t.Fecha}T${t.Hora}`);
+             return turnoDate >= today;
+          });
+          
+          // Ordenar por fecha y hora
+          upcoming.sort((a: TurnoOut, b: TurnoOut) => {
+             return new Date(`${a.Fecha}T${a.Hora}`).getTime() - new Date(`${b.Fecha}T${b.Hora}`).getTime();
+          });
+
+          // Mostrar solo los próximos 3
+          setAppointments(upcoming.slice(0, 3));
+        } catch (error) {
+          console.error("Error fetching appointments:", error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    fetchAppointments();
+  }, [paciente]);
+
+  if (loading) {
+    return <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">Cargando turnos...</div>;
+  }
+
+  if (!paciente) {
+    return null; // O un mensaje de que debe iniciar sesión
+  }
+
   return (
     // Contenedor principal del widget con estilos de tarjeta
     <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
@@ -42,20 +65,30 @@ export default function UpcomingAppointments() {
 
       {/* Lista de turnos */}
       <div className="space-y-4">
-        {appointments.map((appointment) => (
-          <Link
-            key={appointment.id}
-            href={appointment.href}
-            className="flex items-center justify-between p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border"
-          >
-            <div>
-              <h3 className="font-semibold text-blue-600">{appointment.specialty}</h3>
-              <p className="text-sm text-gray-700">{appointment.doctor}</p>
-              <p className="text-sm text-gray-500">{`${appointment.date} - ${appointment.time}`}</p>
-            </div>
-            <ChevronRight className="h-5 w-5 text-gray-400" />
-          </Link>
-        ))}
+        {appointments.length > 0 ? (
+          appointments.map((appointment) => (
+            <Link
+              key={`${appointment.Fecha}-${appointment.Hora}`}
+              href="/portal/turnos" // Por ahora redirige a la lista completa
+              className="flex items-center justify-between p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border"
+            >
+              <div>
+                <h3 className="font-semibold text-blue-600">
+                  {appointment.especialidad_descripcion || 'Especialidad'}
+                </h3>
+                <p className="text-sm text-gray-700">
+                  Dr. {appointment.medico_nombre} {appointment.medico_apellido}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {`${appointment.Fecha} - ${appointment.Hora}`}
+                </p>
+              </div>
+              <ChevronRight className="h-5 w-5 text-gray-400" />
+            </Link>
+          ))
+        ) : (
+          <p className="text-gray-500 text-sm">No tienes turnos próximos agendados.</p>
+        )}
       </div>
 
       {/* Enlace para ver todos los turnos */}

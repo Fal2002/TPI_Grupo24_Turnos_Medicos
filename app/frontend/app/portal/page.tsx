@@ -16,21 +16,12 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         
         {/* El componente de Próximos Turnos */}
-        {/* Ocupa 4 columnas en móvil (todo el ancho) y 1 columna en pantallas grandes (un cuarto) */}
-        <div className="lg:col-span-1">
+        {/* Ocupa 4 columnas en móvil (todo el ancho) y 4 columnas en pantallas grandes (todo el ancho) */}
+        <div className="lg:col-span-4">
           <UpcomingAppointments />
         </div>
         
-        {/* Otros componentes del Dashboard */}
-        {/* Este contenedor ocupa 4 columnas en móvil y 3 en pantallas grandes (tres cuartos) */}
-        <div className="lg:col-span-3 bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            Otro Contenido del Dashboard
-          </h2>
-          <p>
-            Aquí puedes agregar gráficos, estadísticas, notificaciones u otros widgets.
-          </p>
-        </div>
+        
 
       </div>
     </div>
