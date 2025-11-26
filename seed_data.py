@@ -380,7 +380,7 @@ def seed_users_and_pacientes(db: Session):
 
 def seed_agendas_regulares(db: Session):
     """Crea agendas regulares para los médicos"""
-    print("📅 Creando agendas regulares...")
+    print("📅 Creando agendas regulares. ..")
 
     # Obtener todos los médicos
     medicos = db.query(Medico).all()
