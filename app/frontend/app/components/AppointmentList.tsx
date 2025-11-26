@@ -197,7 +197,7 @@ export default function AppointmentList() {
         )}
 
         {/* 🔥 BOTÓN CONFIRMAR — SOLO SI ES HOY Y ESTÁ PENDIENTE */}
-        {isToday(appointment.Fecha) && appointment.estado === 'Pendiente' && (
+        {appointment.estado === 'Pendiente' && (
           <div className="mt-4 md:mt-0 md:ml-3 flex-shrink-0">
             <button
               onClick={() => handleConfirmAppointment(appointment)}

@@ -119,7 +119,7 @@ export default function EditarPacientePage() {
           
           {/* Campo Número (Identificador - No Editable) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Número (DNI / Afiliado)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Número</label>
             <div className="relative">
               <input
                 type="number"

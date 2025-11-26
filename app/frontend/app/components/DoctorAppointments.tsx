@@ -409,10 +409,10 @@ export default function DoctorAppointments() {
                         <Megaphone size={16}/>
                     </button>
                   )}
-                  <button onClick={() => handleOpenModal('Atendido', turno)} disabled={isPast || isCancelado || isAtendiendo || isFinalizado || turno.estado !== 'Anunciado'} className="p-2 bg-teal-100 text-teal-700 rounded-full hover:bg-teal-200 disabled:bg-gray-100 disabled:text-gray-400">
+                  <button onClick={() => handleOpenModal('Atendido', turno)} disabled={isCancelado || isAtendiendo || isFinalizado || turno.estado !== 'Anunciado'} className="p-2 bg-teal-100 text-teal-700 rounded-full hover:bg-teal-200 disabled:bg-gray-100 disabled:text-gray-400">
                     <Play size={16}/>
                   </button>
-                  <button onClick={() => handleOpenModal('Finalizado', turno)} disabled={isPast || isCancelado || isFinalizado || (turno.estado !== 'Anunciado' && !isAtendiendo)} className="p-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 disabled:bg-gray-100 disabled:text-gray-400">
+                  <button onClick={() => handleOpenModal('Finalizado', turno)} disabled={isCancelado || isFinalizado || (turno.estado !== 'Anunciado' && !isAtendiendo)} className="p-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 disabled:bg-gray-100 disabled:text-gray-400">
                     <Check size={16}/>
                   </button>
                   {turno.estado === 'Anunciado' && (

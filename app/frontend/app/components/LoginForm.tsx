@@ -12,9 +12,9 @@ type Role = 'paciente' | 'medico' | 'admin';
 
 const TABS_CONFIG = [
   // ... (la configuración de TABS se mantiene igual)
-  { id: 'paciente' as Role, label: 'Soy Paciente', icon: User, endpoint: 'http://localhost:8000/api/auth/login', redirectPath: '/portal', identifierField: 'email', identifierLabel: 'DNI', identifierType: 'text', identifierIcon: Fingerprint },
-  { id: 'medico' as Role, label: 'Soy Médico', icon: Stethoscope, endpoint: 'http://localhost:8000/api/auth/login', redirectPath: '/medico', identifierField: 'email', identifierLabel: 'Matrícula Profesional', identifierType: 'text', identifierIcon: FileBadge },
-  { id: 'admin' as Role, label: 'Soy Admin', icon: ShieldCheck, endpoint: 'http://localhost:8000/api/auth/login', redirectPath: '/admin', identifierField: 'email', identifierLabel: 'N° de Legajo', identifierType: 'text', identifierIcon: FileKey },
+  { id: 'paciente' as Role, label: 'Soy Paciente', icon: User, endpoint: 'http://localhost:8000/api/auth/login', redirectPath: '/portal', identifierField: 'email', identifierLabel: 'email', identifierType: 'text', identifierIcon: Fingerprint },
+  { id: 'medico' as Role, label: 'Soy Médico', icon: Stethoscope, endpoint: 'http://localhost:8000/api/auth/login', redirectPath: '/medico', identifierField: 'email', identifierLabel: 'email', identifierType: 'text', identifierIcon: FileBadge },
+  { id: 'admin' as Role, label: 'Soy Admin', icon: ShieldCheck, endpoint: 'http://localhost:8000/api/auth/login', redirectPath: '/admin', identifierField: 'email', identifierLabel: 'email', identifierType: 'text', identifierIcon: FileKey },
 ];
 
 export default function LoginForm() {
@@ -122,12 +122,6 @@ export default function LoginForm() {
           </button>
         </div>
       </form>
-      <div className="text-sm text-center text-gray-500">
-        ¿No tienes una cuenta?{' '}
-        <Link href="/registro" className="font-medium text-blue-600 hover:underline">
-          Regístrate
-        </Link>
-      </div>
     </div>
   );
 }

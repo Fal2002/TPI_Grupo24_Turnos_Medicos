@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from app.backend.models.models import Receta, DetalleReceta, Medicamento
 from typing import List, Optional
 
+
 class RecetaRepository:
     """Clase responsable de la interacción directa con la tabla Recetas."""
 
@@ -38,7 +39,7 @@ class RecetaRepository:
         except IntegrityError as e:
             self.db.rollback()
             raise e
-        
+
         self.db.refresh(receta_data)
         return receta_data
 
@@ -56,7 +57,7 @@ class RecetaRepository:
         except IntegrityError as e:
             self.db.rollback()
             raise e
-        
+
         self.db.refresh(detalle)
         return detalle
 
